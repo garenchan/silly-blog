@@ -1,3 +1,3 @@
-# flask-demo
+# IBlog
 
-a demo based on flask framework
+基于Flask和iView的博客系统
