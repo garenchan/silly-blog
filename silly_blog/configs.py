@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
+
+
+DIR_NAME = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    pass
+    """Basic Configurations"""
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(DIR_NAME, "db.sqlite")
 
 
 class TestingConfig(Config):
