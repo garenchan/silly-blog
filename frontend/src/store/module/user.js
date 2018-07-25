@@ -27,7 +27,7 @@ export default {
     },
     // 获取用户相关信息
     getUserInfo ({ state, commit }) {
-      console.log("get user info")
+      console.log('get user info')
     }
   }
 }
