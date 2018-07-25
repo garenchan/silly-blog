@@ -1,0 +1,18 @@
+# App CLI
+python-dotenv==0.8.2
+
+# Flask basic
+click==6.7
+itsdangerous==0.24
+Jinja2==2.10
+MarkupSafe==1.0
+Werkzeug==0.14.1
+Flask==1.0.2
+
+# ORM related
+SQLAlchemy==1.2.10
+Flask-SQLAlchemy==2.3.2
+
+# Flask extensions
+Flask-Migrate==2.2.1
+Flask-RESTful==0.3.6

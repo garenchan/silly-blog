@@ -7,8 +7,13 @@ DIR_NAME = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
+    SECRET_KEY = "468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b"
     """Basic Configurations"""
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(DIR_NAME, "db.sqlite")
+    SQLALCHEMY_ECHO = False
+
+    # default is None, will issue a warning
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class TestingConfig(Config):
@@ -16,7 +21,8 @@ class TestingConfig(Config):
 
 
 class DevelopmentConfig(Config):
-    pass
+    """Configurations For Dev Environment"""
+    SQLALCHEMY_ECHO = True
 
 
 class ProductionConfig(Config):
