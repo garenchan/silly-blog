@@ -16,3 +16,6 @@ Flask-SQLAlchemy==2.3.2
 # Flask extensions
 Flask-Migrate==2.2.1
 Flask-RESTful==0.3.6
+
+# Simplified object serialization
+marshmallow==2.15.3

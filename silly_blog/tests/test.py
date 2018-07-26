@@ -3,13 +3,17 @@
 from flask import Flask
 import flask_restful as restful
 
+
 app = Flask(__name__)
 api = restful.Api(app)
 
+
 @api.resource("/")
 class HelloWorld(restful.Resource):
+
     def get(self):
         return {'hello': 'world'}
+
 
 #api.add_resource(HelloWorld, '/')
 

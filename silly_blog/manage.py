@@ -3,15 +3,13 @@
 import sys
 import os
 
-
 dir_name = os.path.abspath(os.path.dirname(__file__))
-par_dir = os.path.join(dir_name, "..")
+par_dir = os.path.join(dir_name, os.pardir)
 sys.path.append(par_dir)
 
 
-import click
-
-from silly_blog.app import app, models
+import click # noqa
+from silly_blog.app import app, models # noqa
 
 
 @app.shell_context_processor

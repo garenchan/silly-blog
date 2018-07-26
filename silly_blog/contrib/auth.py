@@ -31,6 +31,7 @@ class HTTPTokenAuth(object):
             self.init_app(app)
 
     def init_app(self, app):
+        self.force_auth = app.config.get("FORCE_TOKEN_AUTH", True)
         if not hasattr(app, "extensions"):
             app.extensions = {}
         app.extensions["auth_manager"] = self
@@ -91,7 +92,7 @@ class HTTPTokenAuth(object):
         """A decorator for auth failed callback
 
         :param callback: The callback for unauthorized users.
-        :type callback: callback
+        :type callback: callable
         """
         @functools.wraps(callback)
         def wrapper(*args, **kwargs):
@@ -108,7 +109,7 @@ class HTTPTokenAuth(object):
         """Default auth failed callback"""
         return "Unauthorized Access"
 
-    def login_required(self, f):
+    def login_required(self, func):
         """A decorator for view handler.
 
         Implement access control for resources like this:
@@ -117,11 +118,12 @@ class HTTPTokenAuth(object):
             def resource():
                 pass
         """
-        @functools.wraps(f)
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if self.load_user() is None:
-                return self._unauthorized_callback()
-            return f(*args, **kwargs)
+                if self.force_auth:
+                    return self._unauthorized_callback()
+            return func(*args, **kwargs)
 
         return wrapper
 

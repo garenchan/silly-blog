@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import time
+import datetime
 import uuid
 import logging
 
-from flask import g
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from silly_blog.app import db, auth, jws
 
 
-LOG = logging.getLogger(__file__)
+LOG = logging.getLogger(__name__)
 
 
 class IdMixin(object):
@@ -31,8 +30,8 @@ class UUIDMixin(object):
 
 class TimestampMixin(object):
     """Timestamp Mixin"""
-    created_at = db.Column(db.TIMESTAMP, default=time.time)
-    updated_at = db.Column(db.TIMESTAMP, default=time.time)
+    created_at = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
 
 
 class ModelBase(db.Model):
@@ -48,20 +47,23 @@ class ModelBase(db.Model):
     def to_dict(self):
         """Returns the models'a attributes as a dictionary."""
         names = (column.name for column in self.__table__.columns)
-        return {name: getattr(self, name) for name in names}
+        ret = dict()
+        for name in names:
+            value = getattr(self, name)
+            if isinstance(value, datetime.datetime):
+                value = value.isoformat() + 'Z'
+            ret[name] = value
+        return ret
 
     def __str__(self):
         """Convert model instance to string.
 
         ModelBase subclasses can override this to custom str().
         """
-        identifier = None
-        if hasattr(self, "name"):
-            identifier = self.name
-        elif hasattr(self, "title"):
-            identifier = self.title
-        elif hasattr(self, "id"):
-            identifier = self.id
+        for attr in ["name", "title", "id"]:
+            identifier = getattr(self, attr, None)
+            if identifier is not None:
+                break
         return "<{0} {1!r}>".format(self.__class__.__name__, identifier)
     __repr__ = __str__
 
@@ -130,10 +132,12 @@ class User(UUIDMixin, ModelBase):
     role_id = db.Column(db.Integer,
                         db.ForeignKey("roles.id", ondelete="CASCADE"))
     enabled = db.Column(db.Boolean)
-    local_user = db.relationship("LocalUser", uselist=False, lazy="subquery",
-                                 backref="user", cascade="all,delete-orphan")
+    local_user = db.relationship("LocalUser", uselist=False, lazy="select",
+                                 backref=db.backref("user", lazy="joined"),
+                                 cascade="all,delete-orphan")
     federated_users = db.relationship("FederatedUser", single_parent=True,
-                                      lazy="subquery", backref="user",
+                                      lazy="select",
+                                      backref="user",
                                       cascade="all,delete-orphan")
     articles = db.relationship("Article", lazy="dynamic",
                                backref=db.backref("author", lazy="subquery"))
@@ -146,6 +150,13 @@ class User(UUIDMixin, ModelBase):
             return self.federated_users[0].unique_id
         else:
             return None
+
+    @name.setter
+    def name(self, value):
+        if not self.local_user:
+            self.local_user = LocalUser()
+        # TODO: local user name can only set once
+        self.local_user.name = value
 
     @hybrid_property
     def display_name(self):
@@ -175,11 +186,25 @@ class User(UUIDMixin, ModelBase):
             self.local_user = LocalUser()
         self.local_user.password = generate_password_hash(value)
 
-    def check_password(self, password: str):
+    def check_password(self, password):
         """Check that a plaintext password matches hashed."""
         if self.password is None or password is None:
             return False
         return check_password_hash(self.password, password)
+
+    @staticmethod
+    def get(user_id=None, name_email=None):
+        """Get user by id or name/email"""
+        assert any((user_id, name_email))
+        if user_id:
+            return User.query.get(user_id)
+        elif name_email:
+            local_user = LocalUser.query.join(LocalUser.user).filter(db.or_(
+                LocalUser.name == name_email, LocalUser.email == name_email
+            )).first()
+            return local_user.user if local_user else None
+        else:
+            return None
 
     def generate_auth_token(self):
         """Generate a `JWS` token for user"""
@@ -191,12 +216,14 @@ class User(UUIDMixin, ModelBase):
         """Verify auth token and returns a user object."""
         try:
             data = jws.decode(token)
-            user_id = data["id"]
         except Exception:
             LOG.exception("Verify auth token {!r} failed".format(token))
             return None
         else:
-            return User.query.get(user_id)
+            if data is None or data.get("id") is None:
+                return None
+            else:
+                return User.query.get(data["id"])
 
     @staticmethod
     def insert_default_values():
@@ -214,7 +241,8 @@ class User(UUIDMixin, ModelBase):
                 continue
             user = User(enabled=True)
             user.role = Role.query.filter_by(name=info.pop("role")).first()
-            user.local_user = LocalUser.from_dict(info)
+            user.name = info["name"]
+            user.password = info["password"]
             db.session.add(user)
         db.session.commit()
 
@@ -270,7 +298,7 @@ class Tag(UUIDMixin, TimestampMixin, ModelBase):
     """Article Tag Model"""
     __tablename__ = "tags"
 
-    name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64), unique=True, nullable=False)
 
     articles = db.relationship("Article", secondary=article_tag_mapping,
                                backref=db.backref("tags", lazy="dynamic"),

@@ -2,7 +2,8 @@
 This module is a temporary substitute for `flask-jwt`.
 For details, see `https://en.wikipedia.org/wiki/JSON_Web_Signature`
 """
-from itsdangerous import TimedJSONWebSignatureSerializer as JWSSerializer
+from itsdangerous import (TimedJSONWebSignatureSerializer as JWSSerializer,
+                          BadSignature, SignatureExpired)
 
 
 class JSONWebSignature(object):
@@ -29,4 +30,12 @@ class JSONWebSignature(object):
 
     def decode(self, token):
         """Decodes a token and returns playload object."""
-        return self.serializer.loads(token)
+        try:
+            payload = self.serializer.loads(token)
+        except (BadSignature, SignatureExpired):
+            payload = None
+        return payload
+
+    def get_expires_in(self):
+        """Get expire time, in seconds"""
+        return self.serializer.expires_in
