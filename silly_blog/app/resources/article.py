@@ -19,6 +19,22 @@ from silly_blog.contrib.utils import (envelope_json_required, str2bool,
 LOG = logging.getLogger(__name__)
 
 
+class CreateArticleSchema(Schema):
+    """Validate create article input"""
+    title = fields.Str(required=True, validate=Length(min=1, max=255))
+    summary = fields.Str(validate=Length(max=255))
+    content = fields.Str(required=True)
+    published = fields.Boolean()
+    category_id = fields.Str(required=True, validate=Length(max=64))
+    source_id = fields.Str(required=True, validate=Length(max=64))
+    tags = fields.Dict(values=fields.List(fields.Str(validate=Length(max=64))),
+                       keys=fields.Str())
+
+    @post_load
+    def make_article(self, data):
+        return Article.from_dict(data)
+
+
 @api.resource("/articles/", methods=["POST", "GET"], endpoint="articles")
 @api.resource("/articles/<string:article_id>", methods=["GET"], endpoint="article")
 class ArticleResource(restful.Resource):
@@ -26,6 +42,7 @@ class ArticleResource(restful.Resource):
 
     def __init__(self):
         super().__init__()
+        self.post_schema = CreateArticleSchema()
 
     @staticmethod
     def _article_to_dict(article, content=False):
@@ -104,3 +121,22 @@ class ArticleResource(restful.Resource):
         content = request.args.get("content", False)
         return {"articles": [self._article_to_dict(article, content=content)
                              for article in articles]}
+
+    @auth.login_required
+    @envelope_json_required("article")
+    def post(self):
+        """Create a article.
+
+        Accept article as a dict that looks like:
+            {
+                "article": {
+                    "title": "db",
+                    "summary": "db related",
+                    "content": "",
+                    "published": True,
+                    "category_id": "767324455b2b4a6c9afc35331c0c14d0",
+                    "source_id": "0484d56615ac49f381876ca1112cccd7",
+                    "tags": "",
+                }
+            }
+        """
