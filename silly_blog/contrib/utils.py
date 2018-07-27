@@ -3,7 +3,7 @@ Some Utils For Self-Used Without Generality.
 """
 import functools
 
-from flask import request, jsonify
+from flask import g, request, jsonify
 from flask.wrappers import BadRequest
 
 
@@ -63,7 +63,7 @@ def envelope_json_required(envelope):
             }
         }
     We uncover the envelope, after that we can access sealed dict like this:
-        request.envelope -> {
+        g.envelope -> {
                                 "arg1": "username",
                                 "arg2": "password",
                             }
@@ -72,7 +72,7 @@ def envelope_json_required(envelope):
     :return: a wrapper function
     """
     if not isinstance(envelope, str):
-        raise TypeError("Expected envelope to be a str")
+        raise TypeError("Expected `envelope` to be a str")
 
     def decorating_function(func):
         @functools.wraps(func)
@@ -87,9 +87,30 @@ def envelope_json_required(envelope):
                 if not isinstance(json, dict) or \
                         not isinstance(json.get(envelope), dict):
                     return make_error_response(400, "Invalid Params")
-                setattr(request, envelope, json[envelope])
+                # NOTE: don't set envelope attribute on `request`, because it
+                # maybe override the original attribute value, `g` namespace
+                # is more cleaner.
+                setattr(g, envelope, json[envelope])
             return func(*args, **kwargs)
 
         return wrapper
 
     return decorating_function
+
+
+def str2bool(value):
+    """Rich convert a str to bool
+    :param value: boolean-style string
+    :param value: str
+    :return: bool
+    """
+    assert isinstance(value, str)
+
+    value = value.strip().lower()
+
+    if value in ["true", "t", "yes", "y", "1"]:
+        return True
+    elif value in ["false", "f", "no", "n", "0"]:
+        return False
+    else:
+        raise ValueError("Unknown boolean-style string %r" % value)

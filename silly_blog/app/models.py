@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import datetime
 import uuid
+import datetime
 import logging
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -38,22 +38,34 @@ class ModelBase(db.Model):
     """Extended base model class"""
     __abstract__ = True
 
+    excludes = []
+
     @classmethod
     def from_dict(cls, d: dict):
         """Returns a model instance from a dictionary."""
         new_d = d.copy()
         return cls(**new_d)
 
-    def to_dict(self):
-        """Returns the models'a attributes as a dictionary."""
-        names = (column.name for column in self.__table__.columns)
-        ret = dict()
-        for name in names:
-            value = getattr(self, name)
-            if isinstance(value, datetime.datetime):
-                value = value.isoformat() + 'Z'
-            ret[name] = value
-        return ret
+    @staticmethod
+    def _converter(obj):
+        """Convert non-json-able object"""
+        mapper = {
+            datetime.datetime: (lambda x: x.isoformat() + 'Z'),
+        }
+        converter = mapper.get(type(obj))
+        return converter(obj) if converter else obj
+
+    def to_dict(self, **kwargs):
+        """Returns the models'a attributes as a dictionary.
+
+        The column in the `exclude` list will not be include, you can change
+        this by set column name to True in `kwargs`.
+        """
+        names = (column.name for column in self.__table__.columns
+                 if kwargs.get(column.name, False) or
+                 column.name not in self.excludes)
+
+        return {name: self._converter(getattr(self, name)) for name in names}
 
     def __str__(self):
         """Convert model instance to string.
@@ -80,8 +92,8 @@ class Role(IdMixin, ModelBase):
     users = db.relationship("User", backref="role", lazy="dynamic")
 
     # role constants
-    ADMINISTRATOR = "administrator"
-    COMMON_USER = "common-user"
+    ADMIN = "admin"
+    USER = "user"
 
     @classmethod
     def insert_default_values(cls):
@@ -103,6 +115,7 @@ class FederatedUser(IdMixin, ModelBase):
     Use for third party auth!
     """
     __tablename__ = "federated_users"
+    excludes = ["id", "user_id"]
 
     user_id = db.Column(db.String(64),
                         db.ForeignKey("users.id", ondelete="CASCADE"))
@@ -115,6 +128,7 @@ class FederatedUser(IdMixin, ModelBase):
 class LocalUser(IdMixin, ModelBase):
     """Local User Model"""
     __tablename__ = "local_users"
+    excludes = ["id", "user_id", "password"]
 
     user_id = db.Column(db.String(64),
                         db.ForeignKey("users.id", ondelete="CASCADE"),
@@ -128,19 +142,38 @@ class LocalUser(IdMixin, ModelBase):
 class User(UUIDMixin, ModelBase):
     """User Model"""
     __tablename__ = "users"
+    excludes = ["role_id"]
 
     role_id = db.Column(db.Integer,
                         db.ForeignKey("roles.id", ondelete="CASCADE"))
-    enabled = db.Column(db.Boolean)
-    local_user = db.relationship("LocalUser", uselist=False, lazy="select",
-                                 backref=db.backref("user", lazy="joined"),
-                                 cascade="all,delete-orphan")
-    federated_users = db.relationship("FederatedUser", single_parent=True,
-                                      lazy="select",
-                                      backref="user",
-                                      cascade="all,delete-orphan")
-    articles = db.relationship("Article", lazy="dynamic",
-                               backref=db.backref("author", lazy="subquery"))
+    enabled = db.Column(db.Boolean, default=True)
+    local_user = db.relationship("LocalUser",
+                                 uselist=False,
+                                 lazy="subquery",
+                                 cascade="all,delete-orphan",
+                                 backref="user",)
+    federated_users = db.relationship("FederatedUser",
+                                      single_parent=True,
+                                      lazy="subquery",
+                                      cascade="all,delete-orphan",
+                                      backref="user",)
+    articles = db.relationship("Article",
+                               lazy="dynamic",
+                               backref="user")
+
+    def __init__(self, **kwargs):
+        for arg in ["name", "display_name", "email", "password"]:
+            val = kwargs.get(arg)
+            if val is not None:
+                setattr(self, arg, val)
+
+        role_id = kwargs.get("role_id")
+        role = Role.query.get(role_id) if role_id else None
+        if not role:
+            role = Role.query.filter_by(name=Role.USER).first()
+        self.role = role
+
+        self.enabled = kwargs.get("enabled", True)
 
     @hybrid_property
     def name(self):
@@ -153,8 +186,7 @@ class User(UUIDMixin, ModelBase):
 
     @name.setter
     def name(self, value):
-        if not self.local_user:
-            self.local_user = LocalUser()
+        self.local_user = self.local_user or LocalUser()
         # TODO: local user name can only set once
         self.local_user.name = value
 
@@ -169,21 +201,26 @@ class User(UUIDMixin, ModelBase):
 
     @display_name.setter
     def display_name(self, value):
-        if not self.local_user:
-            self.local_user = LocalUser()
+        self.local_user = self.local_user or LocalUser()
         self.local_user.display_name = value
 
     @hybrid_property
+    def email(self):
+        return self.local_user.email if self.local_user else None
+
+    @email.setter
+    def email(self, value):
+        # TODO: email validate
+        self.local_user = self.local_user or LocalUser()
+        self.local_user.email = value
+
+    @hybrid_property
     def password(self):
-        if self.local_user:
-            return self.local_user.password
-        else:
-            return None
+        return self.local_user.password if self.local_user else None
 
     @password.setter
     def password(self, value):
-        if not self.local_user:
-            self.local_user = LocalUser()
+        self.local_user = self.local_user or LocalUser()
         self.local_user.password = generate_password_hash(value)
 
     def check_password(self, password):
@@ -230,10 +267,10 @@ class User(UUIDMixin, ModelBase):
         users = [
             {"name": "admin",
              "password": "admin123",
-             "role": Role.ADMINISTRATOR},
+             "role": Role.ADMIN},
             {"name": "common",
              "password": "common123",
-             "role": Role.COMMON_USER},
+             "role": Role.USER},
         ]
         for info in users:
             local_user = LocalUser.query.filter_by(name=info["name"]).first()
@@ -271,12 +308,13 @@ class Category(UUIDMixin, ModelBase):
                                backref=db.backref("parent", remote_side="Category.id"),
                                lazy="dynamic")
     articles = db.relationship("Article",
-                               backref=db.backref("category", uselist=False),
+                               backref="category",
                                lazy="dynamic")
 
     @staticmethod
     def insert_default_values():
-        category = Category(name="database", description="database related",
+        category = Category(name="database",
+                            description="database related",
                             display_order=0)
         db.session.add(category)
         db.session.commit()
@@ -301,7 +339,7 @@ class Tag(UUIDMixin, TimestampMixin, ModelBase):
     name = db.Column(db.String(64), unique=True, nullable=False)
 
     articles = db.relationship("Article", secondary=article_tag_mapping,
-                               backref=db.backref("tags", lazy="dynamic"),
+                               backref="tags",
                                lazy="dynamic")
 
 
@@ -327,6 +365,7 @@ class Source(UUIDMixin, ModelBase):
 class Article(UUIDMixin, TimestampMixin, ModelBase):
     """Article Model"""
     __tablename__ = "articles"
+    excludes = ["category_id", "source_id"]
 
     title = db.Column(db.String(255), nullable=False)
     content = db.Column(db.Text, nullable=False)
@@ -334,9 +373,9 @@ class Article(UUIDMixin, TimestampMixin, ModelBase):
     stars = db.Column(db.Integer, default=0)
     views = db.Column(db.Integer, default=0)
     published = db.Column(db.Boolean, default=False)
+    published_at = db.Column(db.TIMESTAMP, nullable=True)
     user_id = db.Column(db.String(64),
-                        db.ForeignKey("users.id", ondelete="CASCADE"),
-                        nullable=False)
+                        db.ForeignKey("users.id", ondelete="SET NULL"))
     category_id = db.Column(db.String(64),
                             db.ForeignKey("categories.id", ondelete="SET NULL"))
     source_id = db.Column(db.String(64),

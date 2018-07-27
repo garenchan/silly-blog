@@ -4,7 +4,7 @@ import os
 import functools
 import logging
 
-from flask import Flask, request, got_request_exception
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import flask_restful as restful
@@ -32,6 +32,7 @@ def handle_unauthorized():
 def create_app(config_name):
     _app = Flask(__name__, instance_relative_config=True)
     _app.config.from_object(get_config(config_name))
+    # _app.config.from_pyfile(os.getenv("CONFIG_FILE", ""), True)
 
     # db related
     db.init_app(_app)
@@ -65,4 +66,4 @@ app.handle_user_exception = functools.partial(
 
 
 # import views
-from . import resources, views # noqa
+from silly_blog.app import resources, views  # noqa

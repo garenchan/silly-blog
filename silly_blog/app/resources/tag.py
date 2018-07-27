@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request
+from flask import g
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 from marshmallow import Schema, fields, post_load
@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 
 class CreateTagSchema(Schema):
     """Validate create tag input"""
-    name = fields.Str(required=True, validate=Length(min=1 ,max=64))
+    name = fields.Str(required=True, validate=Length(min=1, max=64))
 
     @post_load
     def make_tag(self, data):
@@ -28,7 +28,7 @@ class CreateTagSchema(Schema):
 @api.resource("/tags/", methods=["POST", "GET"], endpoint="tags")
 @api.resource("/tags/<string:tag_id>", methods=["GET"], endpoint="tag")
 class TagResource(restful.Resource):
-    """Controller for article tag resouces"""
+    """Controller for article tag resources"""
 
     def __init__(self):
         super().__init__()
@@ -42,7 +42,7 @@ class TagResource(restful.Resource):
                 "tag": tag.to_dict()
             }
         else:
-            return make_error_response(404, "%r not found" % tag_id)
+            return make_error_response(404, "tag %r not found" % tag_id)
 
     def get(self, tag_id=None):
         """List tags or show details of a specified one."""
@@ -66,7 +66,7 @@ class TagResource(restful.Resource):
                 }
             }
         """
-        result = self.post_schema.load(request.tag)
+        result = self.post_schema.load(g.tag)
         if result.errors:
             return make_error_response(400, result.errors)
 

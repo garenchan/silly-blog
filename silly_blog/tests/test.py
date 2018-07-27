@@ -15,7 +15,7 @@ class HelloWorld(restful.Resource):
         return {'hello': 'world'}
 
 
-#api.add_resource(HelloWorld, '/')
+# api.add_resource(HelloWorld, '/')
 
 if __name__ == '__main__':
     app.run(port=10000, debug=True)

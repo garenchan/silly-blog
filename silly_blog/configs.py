@@ -26,7 +26,7 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = True
 
     # token auth related
-    FORCE_TOKEN_AUTH = False # login_required inaction
+    FORCE_TOKEN_AUTH = False  # login_required inaction
 
 
 class ProductionConfig(Config):

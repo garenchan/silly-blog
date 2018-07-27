@@ -8,8 +8,8 @@ par_dir = os.path.join(dir_name, os.pardir)
 sys.path.append(par_dir)
 
 
-import click # noqa
-from silly_blog.app import app, models # noqa
+import click  # noqa
+from silly_blog.app import app, models  # noqa
 
 
 @app.shell_context_processor
@@ -39,8 +39,9 @@ def deploy():
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=5000)
 @click.option("--debug", is_flag=True, default=False, expose_value=True)
-def runserver(host, port, debug):
-    app.run(host, port, debug)
+@click.option("--threaded", is_flag=True, default=False, expose_value=True)
+def runserver(host, port, debug, threaded):
+    app.run(host, port, debug, threaded=threaded)
 
 
 if __name__ == "__main__":

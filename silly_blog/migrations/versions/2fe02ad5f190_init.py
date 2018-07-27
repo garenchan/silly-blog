@@ -1,8 +1,8 @@
-"""init_db
+"""init
 
-Revision ID: b5197659d11d
+Revision ID: 2fe02ad5f190
 Revises: 
-Create Date: 2018-07-26 22:57:02.321432
+Create Date: 2018-07-27 20:50:11.033641
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b5197659d11d'
+revision = '2fe02ad5f190'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -66,12 +66,13 @@ def upgrade():
     sa.Column('stars', sa.Integer(), nullable=True),
     sa.Column('views', sa.Integer(), nullable=True),
     sa.Column('published', sa.Boolean(), nullable=True),
-    sa.Column('user_id', sa.String(length=64), nullable=False),
+    sa.Column('published_at', sa.TIMESTAMP(), nullable=True),
+    sa.Column('user_id', sa.String(length=64), nullable=True),
     sa.Column('category_id', sa.String(length=64), nullable=True),
     sa.Column('source_id', sa.String(length=64), nullable=True),
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['source_id'], ['sources.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('federated_users',

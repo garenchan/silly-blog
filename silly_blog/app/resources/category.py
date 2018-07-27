@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from flask import request
+from flask import g
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 from marshmallow import Schema, fields, post_load
+from marshmallow.validate import Length
 
 from silly_blog.app import api, db, auth
 from silly_blog.app.models import Category
@@ -17,11 +18,11 @@ LOG = logging.getLogger(__name__)
 
 class CreateCategorySchema(Schema):
     """Validate create category input"""
-    name = fields.Str(required=True)
-    description = fields.Str()
+    name = fields.Str(required=True, validate=Length(min=1, max=255))
+    description = fields.Str(validate=Length(max=255))
     display_order = fields.Int()
     protected = fields.Boolean()
-    parent_id = fields.Str()
+    parent_id = fields.Str(validate=Length(max=64))
 
     @post_load
     def make_category(self, data):
@@ -31,6 +32,7 @@ class CreateCategorySchema(Schema):
 @api.resource("/categories/", methods=["POST", "GET"], endpoint="categories")
 @api.resource("/categories/<string:category_id>", methods=["GET"], endpoint="category")
 class CategoryResource(restful.Resource):
+    """Controller for article category resources"""
 
     def __init__(self):
         super().__init__()
@@ -44,7 +46,7 @@ class CategoryResource(restful.Resource):
                 "category": category.to_dict()
             }
         else:
-            return make_error_response(404, "%r not found" % category_id)
+            return make_error_response(404, "category %r not found" % category_id)
 
     def get(self, category_id=None):
         """List categories or show details of a specified one."""
@@ -72,7 +74,7 @@ class CategoryResource(restful.Resource):
                 }
             }
         """
-        result = self.post_schema.load(request.category)
+        result = self.post_schema.load(g.category)
         if result.errors:
             return make_error_response(400, result.errors)
 
