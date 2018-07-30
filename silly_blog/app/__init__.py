@@ -7,6 +7,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 import flask_restful as restful
 from werkzeug.exceptions import HTTPException
 
@@ -48,6 +49,8 @@ def create_app(config_name):
 
 
 app = create_app(os.getenv("FLASK_CONFIG"))
+# enable CORS
+CORS(app)
 # NOTE: `flask-restful` has a issue: can't defer initialization for app but bp.
 api = restful.Api(app)
 

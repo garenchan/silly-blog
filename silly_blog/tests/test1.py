@@ -41,6 +41,15 @@ def get_token():
     return res["token"]["id"] if res else None
 
 
+def validate_token():
+    token = get_token()
+    url = "http://127.0.0.1:5000/tokens"
+    headers = {
+        "X-Auth-Token": token
+    }
+    client(url, headers=headers)
+
+
 def create_category():
     url = "http://127.0.0.1:5000/categories"
     data = {
@@ -98,5 +107,6 @@ def list_articles():
     url = "http://127.0.0.1:5000/articles/"
     client(url)
 
+
 if __name__ == '__main__':
-    list_articles()
+    validate_token()

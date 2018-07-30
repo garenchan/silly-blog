@@ -27,8 +27,7 @@ class CreateArticleSchema(Schema):
     published = fields.Boolean()
     category_id = fields.Str(required=True, validate=Length(max=64))
     source_id = fields.Str(required=True, validate=Length(max=64))
-    tags = fields.Dict(values=fields.List(fields.Str(validate=Length(max=64))),
-                       keys=fields.Str())
+    tags = fields.Dict()
 
     @post_load
     def make_article(self, data):
@@ -140,3 +139,6 @@ class ArticleResource(restful.Resource):
                 }
             }
         """
+        result = self.post_schema.load(g.article)
+        if result.errors:
+            return make_error_response(400, result.errors)

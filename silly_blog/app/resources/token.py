@@ -8,7 +8,7 @@ import flask_restful as restful
 from marshmallow import Schema, fields
 from marshmallow.validate import Length
 
-from silly_blog.app import api, jws
+from silly_blog.app import api, auth, jws
 from silly_blog.app.models import User
 from silly_blog.contrib.utils import envelope_json_required, make_error_response
 
@@ -28,6 +28,22 @@ class AuthResource(restful.Resource):
     def __init__(self):
         super().__init__()
         self.post_schema = GenerateTokenSchema()
+
+    @auth.login_required
+    def get(self):
+        user = auth.current_user
+        if not user:
+            return make_error_response(401, "")
+        return {
+            "token": {
+                "id": auth.get_token(),
+                "user": {
+                    "id": user.id,
+                    "name": user.name,
+                    "role": user.role.name,
+                },
+            }
+        }
 
     @envelope_json_required("auth")
     def post(self):

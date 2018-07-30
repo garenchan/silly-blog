@@ -50,7 +50,7 @@ class HTTPTokenAuth(object):
                                  "a collection of strs")
         self._keys = _keys
 
-    def _get_token(self):
+    def get_token(self):
         """Get token from request headers"""
         for key in self.keys:
             token = request.headers.get(key, "").strip()
@@ -74,13 +74,13 @@ class HTTPTokenAuth(object):
         return callback
 
     @staticmethod
-    def _update_request_context_with_user(user=None):
+    def _update_request_context_with_user(user):
         """Store the given user as ctx.user"""
         ctx = _request_ctx_stack.top
         ctx.user = user
 
     def load_user(self):
-        token = self._get_token()
+        token = self.get_token()
 
         user = None
         if self._user_callback:
