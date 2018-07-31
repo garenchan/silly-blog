@@ -33,7 +33,8 @@ class AuthResource(restful.Resource):
     def get(self):
         user = auth.current_user
         if not user:
-            return make_error_response(401, "")
+            print(auth.get_token())
+            return make_error_response(401, auth.get_token())
         return {
             "token": {
                 "id": auth.get_token(),

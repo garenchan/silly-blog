@@ -70,7 +70,7 @@ export default {
       return this.$store.state.app.tagRouter
     },
     userAvator () {
-      return this.$store.state.user.avatorImgPath
+      return this.$store.state.user.avatar
     },
     cacheList () {
       return this.tagNavList.length ? this.tagNavList.filter(item => !(item.meta && item.meta.notCache)).map(item => item.name) : []
@@ -129,27 +129,6 @@ export default {
     this.setBreadCrumb(this.$route.matched)
     // 设置初始语言
     this.setLocal(this.$i18n.locale)
-    // 文档提示
-    this.$Notice.open({
-      title: '想快速上手，去看文档吧',
-      duration: 0,
-      render: (h) => {
-        return h('p', {
-          style: {
-            fontSize: '13px'
-          }
-        }, [
-          '点击',
-          h('a', {
-            attrs: {
-              href: 'https://lison16.github.io/iview-admin-doc/#/',
-              target: '_blank'
-            }
-          }, 'iview-admin2.0文档'),
-          '快速查看'
-        ])
-      }
-    })
   }
 }
 </script>

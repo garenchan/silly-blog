@@ -19,9 +19,9 @@ export const hasChild = (item) => {
   return item.children && item.children.length !== 0
 }
 
-const showThisMenuEle = (item, access) => {
-  if (item.meta && item.meta.access && item.meta.access.length) {
-    if (hasOneOf(item.meta.access, access)) return true
+const showThisMenuEle = (item, role) => {
+  if (item.meta && item.meta.roles && item.meta.roles.length) {
+    if (item.meta.roles.indexOf(role) > -1) return true
     else return false
   } else return true
 }
@@ -29,7 +29,7 @@ const showThisMenuEle = (item, access) => {
  * @param {Array} list 通过路由列表得到菜单列表
  * @returns {Array}
  */
-export const getMenuByRouter = (list, access) => {
+export const getMenuByRouter = (list, role) => {
   let res = []
   forEach(list, item => {
     if (!item.meta || (item.meta && !item.meta.hideInMenu)) {
@@ -38,14 +38,13 @@ export const getMenuByRouter = (list, access) => {
         name: item.name,
         meta: item.meta
       }
-      if ((hasChild(item) || (item.meta && item.meta.showAlways)) && showThisMenuEle(item, access)) {
-        obj.children = getMenuByRouter(item.children, access)
+      if ((hasChild(item) || (item.meta && item.meta.showAlways)) && showThisMenuEle(item, role)) {
+        obj.children = getMenuByRouter(item.children, role)
       }
       if (item.meta && item.meta.href) obj.href = item.meta.href
-      if (showThisMenuEle(item, access)) res.push(obj)
+      if (showThisMenuEle(item, role)) res.push(obj)
     }
   })
-  console.log(res)
   return res
 }
 
@@ -123,29 +122,28 @@ export const getNewTagList = (list, newRoute) => {
 }
 
 /**
- * @param {*} access 用户权限数组，如 ['super_admin', 'admin']
+ * @param {*} role 用户角色
  * @param {*} route 路由列表
  */
-const hasAccess = (access, route) => {
-  if (route.meta && route.meta.access) return hasOneOf(access, route.meta.access)
-  else return true
+const hasAccess = (role, route) => {
+  return showThisMenuEle(route, role)
 }
 
 /**
  * @param {*} name 即将跳转的路由name
- * @param {*} access 用户权限数组
+ * @param {*} role 用户角色
  * @param {*} routes 路由列表
  * @description 用户是否可跳转到该页
  */
-export const canTurnTo = (name, access, routes) => {
+export const canTurnTo = (name, role, routes) => {
   const getHasAccessRouteNames = (list) => {
     let res = []
     list.forEach(item => {
       if (item.children && item.children.length) {
         res = [].concat(res, getHasAccessRouteNames(item.children))
       } else {
-        if (item.meta && item.meta.access) {
-          if (hasAccess(access, item)) res.push(item.name)
+        if (item.meta && item.meta.roles) {
+          if (hasAccess(role, item)) res.push(item.name)
         } else {
           res.push(item.name)
         }

@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import routes from './routers'
-// import store from '@/store'
+import store from '@/store'
 import iView from 'iview'
 import { getToken } from '@/libs/util'
 
@@ -21,6 +21,14 @@ router.beforeEach((to, from, next) => {
     })
   } else if (!token && to.name === LOGIN_PAGE_NAME) {
     next()
+  } else if (token && to.name === LOGIN_PAGE_NAME) {
+    next({
+      name: 'home' // 跳转到home页
+    })
+  } else {
+    store.dispatch('getUserInfo').then(user => {
+      next()
+    })
   }
 })
 

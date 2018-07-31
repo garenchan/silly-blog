@@ -70,7 +70,7 @@ def create_tag():
     url = "http://127.0.0.1:5000/tags"
     data = {
         "tag": {
-            "name": "123",
+            "name": "openstack",
         },
     }
     client(url, data)
@@ -109,4 +109,4 @@ def list_articles():
 
 
 if __name__ == '__main__':
-    validate_token()
+    create_tag()

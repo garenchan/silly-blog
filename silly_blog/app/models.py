@@ -109,7 +109,7 @@ class Role(IdMixin, ModelBase):
         db.session.commit()
 
 
-class FederatedUser(IdMixin, ModelBase):
+class FederatedUser(IdMixin, TimestampMixin, ModelBase):
     """Federated User Model
 
     Use for third party auth!
@@ -125,7 +125,7 @@ class FederatedUser(IdMixin, ModelBase):
     display_name = db.Column(db.String(255), nullable=True)
 
 
-class LocalUser(IdMixin, ModelBase):
+class LocalUser(IdMixin, TimestampMixin, ModelBase):
     """Local User Model"""
     __tablename__ = "local_users"
     excludes = ["id", "user_id", "password"]
@@ -267,9 +267,11 @@ class User(UUIDMixin, ModelBase):
         users = [
             {"name": "admin",
              "password": "admin123",
+             "email": "admin@qq.com",
              "role": Role.ADMIN},
             {"name": "common",
              "password": "common123",
+             "email": "common@qq.com",
              "role": Role.USER},
         ]
         for info in users:
@@ -280,6 +282,7 @@ class User(UUIDMixin, ModelBase):
             user.role = Role.query.filter_by(name=info.pop("role")).first()
             user.name = info["name"]
             user.password = info["password"]
+            user.email = info["email"]
             db.session.add(user)
         db.session.commit()
 
