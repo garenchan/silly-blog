@@ -5,8 +5,8 @@ import logging
 from flask import g, request
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import UnaryExpression
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length, Email
 
@@ -84,18 +84,18 @@ class ArticleResource(restful.Resource):
             query = query.filter_by(source_id=source_id)
 
         # order by related
-        sort_key = request.args.get("sort_key", "published_at")
-        sort_attribute = getattr(Article, sort_key, None)
+        sort = request.args.get("sort", "published_at")
+        sort_attribute = getattr(Article, sort, None)
         if not isinstance(sort_attribute, InstrumentedAttribute):
-            return make_error_response(400, "Unknown sort_key %r" % sort_key)
-        sort_dir = request.args.get("sort_dir", "desc")
+            return make_error_response(400, "Unknown sort %r" % sort)
+        order = request.args.get("order", "desc")
         try:
-            sort_dir_method = getattr(sort_attribute, sort_dir)
-            sort_exp = sort_dir_method()
+            sort_method = getattr(sort_attribute, order)
+            sort_exp = sort_method()
             if not isinstance(sort_exp, UnaryExpression):
                 raise TypeError("Not a unary expression!")
         except (AttributeError, TypeError):
-            return make_error_response(400, "Unknown sort_dir %r" % sort_dir)
+            return make_error_response(400, "Unknown order %r" % order)
         else:
             query = query.order_by(sort_exp)
 

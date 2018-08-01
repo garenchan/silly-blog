@@ -1,10 +1,12 @@
 """
 Some Utils For Self-Used Without Generality.
 """
+import datetime
 import functools
 
 from flask import g, request, jsonify
 from flask.wrappers import BadRequest
+import iso8601
 
 
 def make_error_response(status, message, code=None):
@@ -114,3 +116,22 @@ def str2bool(value):
         return False
     else:
         raise ValueError("Unknown boolean-style string %r" % value)
+
+
+# time related
+def isotime(at=None):
+    """Stringify time in ISO 8601 format."""
+    if not at:
+        at = datetime.datetime.utcnow()
+    st = at.isoformat()
+    tz = at.tzinfo.tzname(None) if at.tzinfo else "UTC"
+    st += ('Z' if tz in ("UTC", "UTC+00:00") else tz)
+    return st
+
+
+def parse_isotime(timestr):
+    """Parse time from ISO 8601 format."""
+    try:
+        return iso8601.parse_date(timestr)
+    except iso8601.ParseError as ex:
+        raise ValueError(str(ex))

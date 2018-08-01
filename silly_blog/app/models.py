@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from silly_blog.app import db, auth, jws
+from silly_blog.contrib.utils import isotime
 
 
 LOG = logging.getLogger(__name__)
@@ -50,7 +51,7 @@ class ModelBase(db.Model):
     def _converter(obj):
         """Convert non-json-able object"""
         mapper = {
-            datetime.datetime: (lambda x: x.isoformat() + 'Z'),
+            datetime.datetime: (lambda x: isotime(x)),
         }
         converter = mapper.get(type(obj))
         return converter(obj) if converter else obj

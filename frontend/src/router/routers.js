@@ -12,7 +12,7 @@ export default [
   },
   {
     path: '/',
-    name: 'home',
+    name: '_home',
     redirect: '/home',
     component: Main,
     meta: {
@@ -65,7 +65,7 @@ export default [
           icon: 'ios-pricetags',
           title: '标签管理'
         },
-        component: () => import('@/view/tag')
+        component: () => import('@/view/tags')
       }
     ]
   }

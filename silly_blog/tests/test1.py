@@ -67,7 +67,7 @@ def list_category():
 
 
 def create_tag():
-    url = "http://127.0.0.1:5000/tags"
+    url = "http://127.0.0.1:8888/tags"
     data = {
         "tag": {
             "name": "openstack",

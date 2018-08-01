@@ -1,12 +1,12 @@
 <template>
   <div>
     <div v-if="searchable && searchPlace === 'top'" class="search-con search-con-top">
-      <component :is="test"></component>
       <Select v-model="searchKey" class="search-col">
         <Option v-for="item in columns" v-if="item.key !== 'handle'" :value="item.key" :key="`search-col-${item.key}`">{{ item.title }}</Option>
       </Select>
       <Input @on-change="handleClear" clearable placeholder="输入关键字搜索" class="search-input" v-model="searchValue"/>
-      <Button @click="handleSearch" class="search-btn" type="primary"><Icon type="search"/>&nbsp;&nbsp;搜索</Button>
+      <Button @click="handleSearch" class="search-btn" type="primary"><Icon type="ios-search"/>&nbsp;&nbsp;搜索</Button>
+      <component v-for="(tool, key) in toolbox" :key="key" v-bind:is="tool"></component>
     </div>
     <Table
       ref="tablesMain"
@@ -45,6 +45,7 @@
       </Select>
       <Input placeholder="输入关键字搜索" class="search-input" v-model="searchValue"/>
       <Button class="search-btn" type="primary"><Icon type="search"/>&nbsp;&nbsp;搜索</Button>
+      <component v-for="(tool, key) in toolbox" :key="key" v-bind:is="tool"></component>
     </div>
     <a id="hrefToExportTable" style="display: none;width: 0px;height: 0px;"></a>
   </div>
@@ -57,7 +58,7 @@ import './index.less'
 export default {
   name: 'Tables',
   props: {
-    test: {
+    toolbox: {
     },
     value: {
       type: Array,
