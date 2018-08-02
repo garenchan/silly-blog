@@ -32,7 +32,8 @@ class UUIDMixin(object):
 class TimestampMixin(object):
     """Timestamp Mixin"""
     created_at = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
-    updated_at = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow,
+                           onupdate=datetime.datetime.utcnow)
 
 
 class ModelBase(db.Model):
@@ -67,6 +68,17 @@ class ModelBase(db.Model):
                  column.name not in self.excludes)
 
         return {name: self._converter(getattr(self, name)) for name in names}
+
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
     def __str__(self):
         """Convert model instance to string.

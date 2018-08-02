@@ -10,6 +10,9 @@ class Config(object):
     """Basic Configurations"""
     SECRET_KEY = "468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b"
 
+    # make jsonify use utf-8 encoding, maybe default?
+    JSON_AS_ASCII = False
+
     # sqlalchemy related
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(DIR_NAME, "db.sqlite")
     SQLALCHEMY_ECHO = False

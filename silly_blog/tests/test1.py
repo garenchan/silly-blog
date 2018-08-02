@@ -5,7 +5,7 @@ import urllib.request
 import pprint
 
 
-def client(url, data=None, headers=None):
+def client(url, data=None, headers=None, method=None):
     if headers is None:
         headers = {}
     if data:
@@ -13,7 +13,7 @@ def client(url, data=None, headers=None):
         if "content-type" not in headers:
             headers["content-type"] = "application/json"
 
-    req = urllib.request.Request(url, data=data, headers=headers)
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         res = urllib.request.urlopen(req)
     except urllib.request.HTTPError as ex:
@@ -70,7 +70,7 @@ def create_tag():
     url = "http://127.0.0.1:8888/tags"
     data = {
         "tag": {
-            "name": "openstack",
+            "name": "数据库",
         },
     }
     client(url, data)
@@ -80,6 +80,10 @@ def list_tags():
     url = "http://127.0.0.1:5000/tags"
     client(url)
 
+
+def delete_tag():
+    url = "http://127.0.0.1:8888/tags/1834ab2524a947cd95ca53f6e9465648"
+    client(url, method="DELETE")
 
 def list_sources():
     url = "http://127.0.0.1:5000/sources/c20b5d8e028046288d1b189dabdfa2c4"
@@ -109,4 +113,4 @@ def list_articles():
 
 
 if __name__ == '__main__':
-    create_tag()
+    delete_tag()
