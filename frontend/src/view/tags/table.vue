@@ -8,6 +8,10 @@
               :toolbox="toolbox"
               v-model="tableData"
               :columns="columns"
+              @on-sort-change="handleSortChange"
+              @on-save-edit="handleEdit"
+              :custom-search="true"
+              @on-search="handleSearch"
               @on-delete="handleDelete"/>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
@@ -21,7 +25,7 @@
 <script>
 import Tables from '_c/tables'
 import AddTag from './add.vue'
-import { getTags } from '@/api/tag'
+import { listTags, updateTag, deleteTag } from '@/api/tag'
 import { EventBus } from '@/libs/bus'
 
 export default {
@@ -38,16 +42,39 @@ export default {
       pageSize: 10,
       // 当前所在分页索引
       currentPage: 1,
+      // sort related
+      sortColumn: 'updated_at',
+      SortDirection: 'desc',
+      // filter related
+      searchKey: '',
+      searchValue: '',
       tableData: [],
       columns: [
-        {title: 'Name', key: 'name', editable: true, sortable: true},
+        {type: 'selection', key: 'id', width: 60, align: 'center'},
+        {title: 'Name', key: 'name', editable: true, sortable: true, searchable: true},
         {title: 'Create-Time', key: 'created_at', sortable: true},
-        {title: 'Update-Time', key: 'updated_at', sortable: true},
+        {title: 'Update-Time', key: 'updated_at', sortable: true, sortType: 'desc'},
         {
           title: 'Handle',
           key: 'handle',
-          options: [],
-          button: []
+          // options: ['delete'],
+          button: [
+            (h, params, vm) => {
+              return h('Poptip', {
+                props: {
+                  confirm: true,
+                  title: '你确定要删除标签吗?'
+                },
+                on: {
+                  'on-ok': () => {
+                    vm.$emit('on-delete', params)
+                  }
+                }
+              }, [
+                h('Button', '删除标签')
+              ])
+            }
+          ]
         }
       ],
       loading: false,
@@ -59,8 +86,15 @@ export default {
   methods: {
     getTableData () {
       this.loading = true
+      let params = {
+        page: this.currentPage,
+        pageSize: this.pageSize,
+        sort: this.sortColumn,
+        direction: this.SortDirection
+      }
+      if (this.searchKey) params[this.searchKey] = this.searchValue
       return new Promise((resolve, reject) => {
-        getTags({page: this.currentPage, pageSize: this.pageSize}).then(res => {
+        listTags(params).then(res => {
           this.tableData = res.tags
           this.dataTotal = res.total
           this.loading = false
@@ -77,11 +111,68 @@ export default {
       this.getTableData()
     },
     handleDelete (params) {
-      console.log(params)
+      let id = params.row.id
+      let name = params.row.name
+      this.loading = true
+      return new Promise((resolve, reject) => {
+        deleteTag(id).then(res => {
+          this.loading = false
+          this.$Message.info(`标签${name}删除成功`)
+          resolve()
+        }).catch(err => {
+          this.loading = false
+          const response = err.response
+          const data = response.data
+          if ([204, 404].includes(response.status)) {
+            this.$Message.info(`标签${name}删除成功`)
+          } else {
+            this.$Message.error(data.error.message)
+          }
+        })
+      })
     },
     exportExcel () {
       this.$refs.table.exportCsv({
         filename: `table-${(new Date()).valueOf()}.csv`
+      })
+    },
+    handleSortChange ({column, key, order}) {
+      this.sortColumn = key
+      this.SortDirection = order
+      this.getTableData()
+    },
+    handleSearch ({key, value}) {
+      this.searchKey = key
+      this.searchValue = value
+      this.getTableData()
+    },
+    handleEdit (params) {
+      let id = params.row.id
+      let key = params.column.key
+      let origValue = params.row[key]
+      let curValue = params.value
+      let data = {
+        [key]: curValue
+      }
+      this.loading = true
+      return new Promise((resolve, reject) => {
+        updateTag(id, data).then(res => {
+          this.loading = false
+          this.$Message.info('标签名编辑成功')
+          this.$set(this.tableData[params.index], key, res.tag[key])
+          this.$set(this.tableData[params.index], 'updated_at', res.tag.updated_at)
+          resolve()
+        }).catch(err => {
+          this.loading = false
+          const response = err.response
+          const data = response.data
+          if (response.status === 409) {
+            this.$Message.error(`标签名${curValue}已存在`)
+          } else {
+            this.$Message.error(data.error.message)
+          }
+          this.$set(this.tableData[params.index], key, origValue)
+        })
       })
     }
   },
