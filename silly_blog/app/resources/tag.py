@@ -56,7 +56,7 @@ class TagResource(restful.Resource):
                 "tag": tag.to_dict()
             }
         else:
-            return make_error_response(404, "tag %r not found" % tag_id)
+            return make_error_response(404, "Tag %r not found" % tag_id)
 
     def get(self, tag_id=None):
         """List tags or show details of a specified one."""
@@ -173,7 +173,7 @@ class TagResource(restful.Resource):
 
         tag = Tag.query.get(tag_id)
         if not tag:
-            return make_error_response(404, "tag %r not found" % tag_id)
+            return make_error_response(404, "Tag %r not found" % tag_id)
 
         try:
             tag.update(**result.data)
@@ -200,7 +200,7 @@ class TagResource(restful.Resource):
 
         tag = Tag.query.get(tag_id)
         if not tag:
-            return make_error_response(404, "tag %r not found" % tag_id)
+            return make_error_response(404, "Tag %r not found" % tag_id)
 
         try:
             tag.delete()

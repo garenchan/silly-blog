@@ -93,7 +93,7 @@ class ModelBase(db.Model):
     __repr__ = __str__
 
 
-class Role(IdMixin, ModelBase):
+class Role(UUIDMixin, ModelBase):
     """User Role model
 
     Use for RBAC(Role-Based Access Control)!

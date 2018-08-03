@@ -1,8 +1,8 @@
-"""init
+"""initdb
 
-Revision ID: 2fe02ad5f190
+Revision ID: 85aaf0471fe4
 Revises: 
-Create Date: 2018-07-27 20:50:11.033641
+Create Date: 2018-08-03 16:31:28.136059
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '2fe02ad5f190'
+revision = '85aaf0471fe4'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,7 +30,7 @@ def upgrade():
     sa.UniqueConstraint('name')
     )
     op.create_table('roles',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.String(length=64), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
@@ -77,6 +77,8 @@ def upgrade():
     )
     op.create_table('federated_users',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.TIMESTAMP(), nullable=True),
+    sa.Column('updated_at', sa.TIMESTAMP(), nullable=True),
     sa.Column('user_id', sa.String(length=64), nullable=True),
     sa.Column('idp_name', sa.String(length=64), nullable=False),
     sa.Column('protocol', sa.String(length=64), nullable=False),
@@ -87,6 +89,8 @@ def upgrade():
     )
     op.create_table('local_users',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.TIMESTAMP(), nullable=True),
+    sa.Column('updated_at', sa.TIMESTAMP(), nullable=True),
     sa.Column('user_id', sa.String(length=64), nullable=True),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('display_name', sa.String(length=255), nullable=True),
