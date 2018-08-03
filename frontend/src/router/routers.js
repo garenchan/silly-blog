@@ -46,7 +46,7 @@ export default [
           icon: '_qq',
           title: '用户管理'
         },
-        component: () => import('@/view/components/tables/user-table.vue')
+        component: () => import('@/view/users')
       }
     ]
   },

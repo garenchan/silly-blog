@@ -50,7 +50,7 @@ export default {
       searchValue: '',
       tableData: [],
       columns: [
-        {type: 'selection', key: 'id', width: 60, align: 'center'},
+        // {type: 'selection', key: 'id', width: 60, align: 'center'},
         {title: 'Name', key: 'name', editable: true, sortable: true, searchable: true},
         {title: 'Create-Time', key: 'created_at', sortable: true},
         {title: 'Update-Time', key: 'updated_at', sortable: true, sortType: 'desc'},
@@ -60,10 +60,11 @@ export default {
           // options: ['delete'],
           button: [
             (h, params, vm) => {
+              let name = params.row.name
               return h('Poptip', {
                 props: {
                   confirm: true,
-                  title: '你确定要删除标签吗?'
+                  title: `你确定要删除标签"${name}"吗?`
                 },
                 on: {
                   'on-ok': () => {
@@ -71,7 +72,12 @@ export default {
                   }
                 }
               }, [
-                h('Button', '删除标签')
+                h('Button', {
+                  props: {
+                    type: 'dashed',
+                    icon: 'md-trash'
+                  }
+                }, '删除标签')
               ])
             }
           ]
@@ -100,9 +106,10 @@ export default {
           this.loading = false
           resolve()
         }).catch(err => {
-          console.log(err)
-          // const response = err.response
-          // const data = response.data
+          this.loading = false
+          const response = err.response
+          const data = response.data
+          this.$Message.error(data.error.message)
         })
       })
     },
@@ -118,13 +125,15 @@ export default {
         deleteTag(id).then(res => {
           this.loading = false
           this.$Message.info(`标签${name}删除成功`)
+          this.getTableData()
           resolve()
         }).catch(err => {
           this.loading = false
           const response = err.response
           const data = response.data
-          if ([204, 404].includes(response.status)) {
+          if ([404].includes(response.status)) {
             this.$Message.info(`标签${name}删除成功`)
+            this.getTableData()
           } else {
             this.$Message.error(data.error.message)
           }

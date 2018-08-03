@@ -4,7 +4,7 @@ export const listTags = ({since, sort, direction, page, pageSize, ...filters}) =
   return axios.request({
     url: 'tags',
     method: 'get',
-    params: Object.assign({}, {
+    params: Object.assign({
       since: since,
       sort: sort,
       direction: direction,

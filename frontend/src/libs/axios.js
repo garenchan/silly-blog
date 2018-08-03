@@ -46,14 +46,18 @@ class httpRequest {
       return data
     }, (error) => {
       const response = error.response
-      if (response.status === 500) {
+      if (response === undefined) {
+        Message.error('无法连接服务器, 请稍后重试或联系管理员')
+      } else if (response.status === 500) {
         Message.error('服务内部错误')
       } else if (response.status === 401) {
         Cookies.remove(TOKEN_KEY)
         window.location.href = '/#/login'
         Message.error('未登录，或登录失效，请登录')
+      } else {
+        // 对响应错误做点什么
+        return Promise.reject(error)
       }
-      // 对响应错误做点什么
       return Promise.reject(error)
     })
   }

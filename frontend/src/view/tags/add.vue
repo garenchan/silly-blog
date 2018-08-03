@@ -1,5 +1,5 @@
 <template>
-  <Button style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 创建标签
+  <Button type="dashed" style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 创建标签
     <Modal v-model="modalVisible"
             title="创建标签"
             :loading="loading"
