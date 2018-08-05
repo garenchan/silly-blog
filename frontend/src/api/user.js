@@ -29,7 +29,7 @@ export const listUsers = ({since, sort, direction, page, pageSize, ...filters}) 
   return axios.request({
     url: 'users',
     method: 'get',
-    params: Object.assign({}, {
+    params: Object.assign({
       since: since,
       sort: sort,
       direction: direction,

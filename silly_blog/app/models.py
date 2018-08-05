@@ -309,7 +309,7 @@ def _load_user(token):
     return User.verify_auth_token(token)
 
 
-class Category(UUIDMixin, ModelBase):
+class Category(UUIDMixin, TimestampMixin, ModelBase):
     """Article Category Model"""
     __tablename__ = "categories"
 

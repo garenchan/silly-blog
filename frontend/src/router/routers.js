@@ -68,5 +68,24 @@ export default [
         component: () => import('@/view/tags')
       }
     ]
+  },
+  {
+    path: '/admin',
+    name: 'categories',
+    component: Main,
+    meta: {
+      roles: ["admin"]
+    },
+    children: [
+      {
+        path: 'categories',
+        name: '_categories',
+        meta: {
+          icon: 'ios-switch',
+          title: '分类管理'
+        },
+        component: () => import('@/view/categories')
+      }
+    ]
   }
 ]
