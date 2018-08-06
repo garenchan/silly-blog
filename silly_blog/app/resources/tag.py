@@ -168,8 +168,6 @@ class TagResource(restful.Resource):
         result = self.put_schema.load(g.tag)
         if result.errors:
             return make_error_response(400, result.errors)
-        if not tag_id:
-            return make_error_response(400, "Tag id is required")
 
         tag = Tag.query.get(tag_id)
         if not tag:
@@ -195,9 +193,6 @@ class TagResource(restful.Resource):
 
         :param tag_id: an exitsing tag id.
         """
-        if not tag_id:
-            return make_error_response(400, "Tag id is required")
-
         tag = Tag.query.get(tag_id)
         if not tag:
             return make_error_response(404, "Tag %r not found" % tag_id)

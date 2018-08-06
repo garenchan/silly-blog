@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import uuid
+import random
 import datetime
 import logging
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import func
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from silly_blog.app import db, auth, jws
@@ -315,7 +317,7 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
 
     name = db.Column(db.String(255), unique=True, nullable=False)
     description = db.Column(db.Text, nullable=True)
-    display_order = db.Column(db.Integer)
+    display_order = db.Column(db.Integer, default=lambda: Category.get_default_order())
     protected = db.Column(db.Boolean, default=False)
     parent_id = db.Column(db.String(64),
                           db.ForeignKey("categories.id", ondelete="CASCADE"))
@@ -326,6 +328,41 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
     articles = db.relationship("Article",
                                backref="category",
                                lazy="dynamic")
+
+    @classmethod
+    def get_max_order(cls):
+        """Returns max display order"""
+        return db.session.query(func.max(cls.display_order)).scalar()
+
+    @classmethod
+    def get_min_order(cls):
+        """Returns min display order"""
+        return db.session.query(func.min(cls.display_order)).scalar()
+
+    @classmethod
+    def get_default_order(cls, method="max"):
+        """Returns default display order"""
+        def _max():
+            max_order = cls.get_max_order()
+            return max_order + 1 if max_order else 1
+
+        def _min():
+            min_order = cls.get_min_order()
+            return min_order - 1 if min_order else 1
+
+        def _random():
+            min_order, max_order = db.session.query(
+                func.min(cls.display_order), func.max(cls.display_order)).one()
+            return 1 if min_order is None else \
+                random.randint(min_order - 1, max_order + 1)
+
+        mapper = {
+            "max": _max,
+            "min": _min,
+            "random": _random,
+        }
+        generator = mapper.get(method)
+        return generator() if generator else None
 
     @staticmethod
     def insert_default_values():

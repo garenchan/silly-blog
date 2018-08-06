@@ -192,8 +192,6 @@ class UserResource(restful.Resource):
         result = self.put_schema.load(g.user)
         if result.errors:
             return make_error_response(400, result.errors)
-        if not user_id:
-            return make_error_response(400, "User id is required")
 
         user = User.query.get(user_id)
         if not user:
@@ -216,9 +214,6 @@ class UserResource(restful.Resource):
 
         :param tag_id: an exitsing user id.
         """
-        if not user_id:
-            return make_error_response(400, "User id is required")
-
         user = User.query.get(user_id)
         if not user:
             return make_error_response(404, "User %r not found" % user_id)
