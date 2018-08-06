@@ -1,7 +1,7 @@
 <template>
   <Form ref="loginForm" :model="form" :rules="rules" @keydown.enter.native="handleSubmit">
     <FormItem prop="userName">
-      <Input v-model="form.userName" placeholder="请输入用户名">
+      <Input v-model="form.userName" placeholder="请输入用户名/邮箱">
         <span slot="prepend">
           <Icon :size="16" type="ios-person"></Icon>
         </span>
@@ -15,7 +15,10 @@
       </Input>
     </FormItem>
     <FormItem>
-      <Button @click="handleSubmit" type="primary" long>登录</Button>
+      <Button :loading="loading"  @click="handleSubmit" type="primary" long>
+        <span v-if="!loading">登录</span>
+        <span v-else>疯狂登录中...</span>
+      </Button>
     </FormItem>
   </Form>
 </template>
@@ -38,6 +41,10 @@ export default {
           { required: true, message: '密码不能为空', trigger: 'blur' }
         ]
       }
+    },
+    loading: {
+      type: Boolean,
+      default: false
     }
   },
   data () {

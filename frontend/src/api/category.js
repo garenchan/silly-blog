@@ -13,3 +13,34 @@ export const listCategory = ({since, sort, direction, page, pageSize, ...filters
     }, filters)
   })
 }
+
+export const createCategory = ({name, ...extras}) => {
+  let data = {
+    category: Object.assign({
+      name: name
+    }, extras)
+  }
+  return axios.request({
+    url: 'categories',
+    data,
+    method: 'post'
+  })
+}
+
+export const updateCategory = (id, {...info}) => {
+  const data = {
+    category: info
+  }
+  return axios.request({
+    url: `categories/${id}`,
+    data,
+    method: 'put'
+  })
+}
+
+export const deleteCategory = (id) => {
+  return axios.request({
+    url: `categories/${id}`,
+    method: 'delete'
+  })
+}

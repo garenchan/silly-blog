@@ -13,7 +13,8 @@
               :custom-search="true"
               @on-search="handleSearch"
               @on-delete="handleDelete"
-              @on-state-change="handleStateChange"/>
+              @on-order-change="handleOrderChange"
+              @on-protected-change="handleProtectedChange"/>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
             <Page :total="dataTotal" :page-size="pageSize" :current="currentPage" @on-change="changePage"></Page>
@@ -25,15 +26,15 @@
 
 <script>
 import Tables from '_c/tables'
-import AddUser from './add.vue'
-import { listCategory } from '@/api/category'
+import AddCategory from './add.vue'
+import { listCategory, updateCategory, deleteCategory } from '@/api/category'
 import { EventBus } from '@/libs/bus'
 
 export default {
   name: 'CategoryTable',
   components: {
     Tables,
-    AddUser
+    AddCategory
   },
   data () {
     return {
@@ -44,8 +45,8 @@ export default {
       // 当前所在分页索引
       currentPage: 1,
       // sort related
-      sortColumn: 'updated_at',
-      SortDirection: 'desc',
+      sortColumn: 'display_order',
+      SortDirection: 'asc',
       // filter related
       searchKey: '',
       searchValue: '',
@@ -53,10 +54,55 @@ export default {
       columns: [
         // {type: 'selection', key: 'id', width: 60, align: 'center'},
         {title: 'Name', key: 'name', editable: true, sortable: true, searchable: true},
-        // {title: 'Nickname', key: 'display_name', editable: true, sortable: true, searchable: true},
         {title: 'Description', key: 'description', editable: true, sortable: true, searchable: true},
+        {
+          title: 'Order',
+          key: 'display_order',
+          sortable: true,
+          sortType: 'asc',
+          render: (h, params) => {
+            return h('InputNumber', {
+              props: {
+                value: params.row.display_order,
+                editable: false
+              },
+              on: {
+                'on-change': (value) => {
+                  this.$refs.table.$emit('on-order-change', Object.assign(params, {value: value}))
+                }
+              }
+            })
+          }
+        },
+        {
+          title: 'Protected',
+          key: 'protected',
+          sortable: false,
+          render: (h, params) => {
+            return h('i-switch', {
+              props: {
+                // type: 'primary',
+                size: 'large',
+                value: params.row.protected,
+                loading: false
+              },
+              on: {
+                'on-change': (value) => {
+                  this.$refs.table.$emit('on-protected-change', Object.assign(params, {value: value}))
+                }
+              }
+            }, [
+              h('span', {
+                slot: 'open'
+              }, '隐藏'),
+              h('span', {
+                slot: 'close'
+              }, '公开')
+            ])
+          }
+        },
         {title: 'Create-Time', key: 'created_at', sortable: true},
-        {title: 'Update-Time', key: 'updated_at', sortable: true, sortType: 'desc'},
+        {title: 'Update-Time', key: 'updated_at', sortable: true},
         {
           title: 'Handle',
           key: 'handle',
@@ -88,7 +134,7 @@ export default {
       ],
       loading: false,
       toolbox: {
-        'add': AddUser
+        'add': AddCategory
       }
     }
   },
@@ -125,9 +171,9 @@ export default {
       let name = params.row.name
       this.loading = true
       return new Promise((resolve, reject) => {
-        deleteUser(id).then(res => {
+        deleteCategory(id).then(res => {
           this.loading = false
-          this.$Message.info(`用户${name}删除成功`)
+          this.$Message.info(`分类${name}删除成功`)
           this.getTableData()
           resolve()
         }).catch(err => {
@@ -135,7 +181,7 @@ export default {
           const response = err.response
           const data = response.data
           if ([404].includes(response.status)) {
-            this.$Message.info(`用户${name}删除成功`)
+            this.$Message.info(`分类${name}删除成功`)
             this.getTableData()
           } else {
             this.$Message.error(data.error.message)
@@ -191,19 +237,42 @@ export default {
         })
       })
     },
-    handleStateChange (params) {
+    handleOrderChange (params) {
+      let id = params.row.id
+      let origValue = params.row.display_order
+      let curValue = params.value
+      if (origValue === curValue) return
+      let name = params.row.name
+      this.loading = true
+      return new Promise((resolve, reject) => {
+        updateCategory(id, {display_order: curValue}).then(res => {
+          this.loading = false
+          this.$Message.info(`分类"${name}"调整显示顺序成功`)
+          this.getTableData()
+          resolve()
+        }).catch(err => {
+          this.loading = false
+          const response = err.response
+          const data = response.data
+          this.$Message.error(data.error.message)
+          this.getTableData()
+          reject(err)
+        })
+      })
+    },
+    handleProtectedChange (params) {
       let id = params.row.id
       let origValue = params.row.enabled
       let curValue = params.value
       if (origValue === curValue) return
       let name = params.row.name
-      let action = curValue ? '激活' : '禁用'
+      let action = curValue ? '隐藏' : '公开'
       this.loading = true
       return new Promise((resolve, reject) => {
-        updateUser(id, {enabled: curValue}).then(res => {
+        updateCategory(id, {protected: curValue}).then(res => {
           this.loading = false
-          this.$Message.info(`用户"${name}"${action}成功`)
-          this.$set(this.tableData[params.index], 'enabled', res.user.enabled)
+          this.$Message.info(`分类"${name}"${action}成功`)
+          this.$set(this.tableData[params.index], 'protected', res.category.protected)
           resolve()
         }).catch(err => {
           this.loading = false
@@ -211,14 +280,14 @@ export default {
           const data = response.data
           this.$Message.error(data.error.message)
           // TODO: while request failed, restore switch
-          this.$set(this.tableData[params.index], 'enabled', origValue)
+          this.$set(this.tableData[params.index], 'protected', origValue)
           reject(err)
         })
       })
     }
   },
   mounted () {
-    EventBus.$on('userCreated', () => {
+    EventBus.$on('categoryCreated', () => {
       this.getTableData()
     })
     this.getTableData()

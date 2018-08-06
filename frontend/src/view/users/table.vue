@@ -67,7 +67,8 @@ export default {
                 // type: 'primary',
                 size: 'large',
                 value: params.row.enabled,
-                loading: false
+                loading: false,
+                disabled: this.$store.state.user.id === params.row.id
               },
               on: {
                 'on-change': (value) => {
@@ -105,7 +106,8 @@ export default {
                 h('Button', {
                   props: {
                     type: 'dashed',
-                    icon: 'md-trash'
+                    icon: 'md-trash',
+                    disabled: this.$store.state.user.id === params.row.id
                   }
                 }, '删除用户')
               ])

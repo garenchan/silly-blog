@@ -5,7 +5,7 @@
             :loading="loading"
             @on-ok="handleSubmit"
             @on-cancel="cancel">
-      <Form ref="createForm" :model="form" :rules="rules" label-position="left" :label-width="80">
+      <Form ref="createForm" :model="form" :rules="rules" label-position="left" :label-width="80" @submit.native.prevent>
         <FormItem label="标签名" prop="name">
             <Input v-model="form.name" placeholder="请输入标签名"></Input>
         </FormItem>

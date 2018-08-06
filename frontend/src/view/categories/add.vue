@@ -1,102 +1,92 @@
 <template>
-  <Button type="dashed" style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 创建用户
+  <Button type="dashed" style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 创建分类
     <Modal v-model="modalVisible"
-            title="创建用户"
-            :loading="loading"
-            @on-ok="handleSubmit"
-            @on-cancel="cancel">
-      <Form ref="createForm" :model="form" :rules="rules" label-position="top">
-        <FormItem label="用户名" prop="name">
-          <Input v-model="form.name" placeholder="请输入用户名"></Input>
-        </FormItem>
-        <FormItem label="昵称" prop="displayName">
-          <Input v-model="form.displayName" placeholder="请输入昵称"></Input>
-        </FormItem>
-        <FormItem label="邮箱" prop="email">
-          <Input v-model="form.email" placeholder="请输入邮箱"></Input>
-        </FormItem>
-        <FormItem label="密码" prop="password">
-          <Input type="password" v-model="form.password" placeholder="请输入密码"></Input>
-        </FormItem>
-        <FormItem label="确认密码" prop="confirmPassword">
-          <Input type="password" v-model="form.confirmPassword" placeholder="请输入确认密码"></Input>
-        </FormItem>
-        <FormItem label="角色" prop="roleId">
-          <Select v-model="form.roleId" filterable>
-              <Option v-for="item in roles" :value="item.id" :key="item.id">{{ item.name }}</Option>
-          </Select>
-        </FormItem>
-      </Form>
+           title="创建分类"
+           width="700"
+           :loading="loading"
+           @on-ok="handleSubmit"
+           @on-cancel="cancel">
+      <VerticalDivider :leftSideSpan="14" :rightSideSpan="10">
+        <template slot="left-side">
+          <Form ref="createForm" :model="form" :rules="rules" label-position="top">
+            <FormItem label="分类名" prop="name">
+              <Input v-model="form.name" placeholder="请输入分类名" clearable></Input>
+            </FormItem>
+            <FormItem label="分类描述" prop="description">
+              <Input v-model="form.description" type="textarea" :autosize="{minRows: 2}" placeholder="请输入分类描述" clearable></Input>
+            </FormItem>
+            <FormItem label="显示顺序" prop="displayOrder">
+              <RadioGroup v-model="form.displayOrder" type="button" @on-change="handleOrderChange">
+                <Radio label="min">最前</Radio>
+                <Radio label="max">最后</Radio>
+                <Radio label="random">随机</Radio>
+                <Radio label="custom">自定义</Radio>
+              </RadioGroup>
+              <InputNumber v-model="form.displayOrderInput" ref="customDisplayOrderInput" :style="{ marginLeft: '10px', display: inputVisible }" placeholder="请输入值"></InputNumber>
+            </FormItem>
+            <FormItem label="受保护的" prop="protected">
+              <i-switch v-model="form.protected" size="large">
+                <span slot="open">隐藏</span>
+                <span slot="close">公开</span>
+              </i-switch>
+            </FormItem>
+          </Form>
+        </template>
+        <template slot="right-side">
+          <Timeline>
+            <TimelineItem color="blue">
+              <h2>字段描述</h2>
+            </TimelineItem>
+            <TimelineItem color="green">
+              <h3>显示顺序:</h3>
+              <p>类型为整数, 值越小显示越靠前;</p>
+              <p>为空即默认显示在当前分类的最后</p>
+            </TimelineItem>
+            <TimelineItem color="green">
+              <h3>受保护的:</h3>
+              <p>设置为"隐藏"后, 会对普通用户不可见</p>
+            </TimelineItem>
+          </Timeline>
+        </template>
+      </VerticalDivider>
     </Modal>
   </Button>
 </template>
 
 <script>
-import { listRoles } from '@/api/role'
-import { createUser } from '@/api/user'
+import { createCategory } from '@/api/category'
+import VerticalDivider from '_c/vertical-divider'
 import { EventBus } from '@/libs/bus'
 
 export default {
-  name: 'AddUser',
+  name: 'AddCategory',
+  components: {
+    VerticalDivider
+  },
   data () {
-    const validatePassCheck = (rule, value, callback) => {
-      if (value !== this.form.password) {
-        callback(new Error('确认密码与密码不一致'))
-      } else {
-        callback()
-      }
-    }
-
     return {
       modalVisible: false,
       loading: true,
-      roles: [],
+      inputVisible: 'none',
       form: {
         name: '',
-        displayName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        roleId: null
+        description: '',
+        displayOrder: 'max',
+        displayOrderInput: null,
+        protected: false
       },
       rules: {
         name: [
-          { required: true, message: '用户名不能为空', trigger: 'blur' },
-          { type: 'string', min: 5, max: 64, message: '用户名最少5个字符最多255个字符' }
+          { required: true, message: '分类名不能为空', trigger: 'blur' },
+          { type: 'string', max: 255, message: '分类名最多255个字符' }
         ],
-        email: [
-          { type: 'email', message: '邮箱格式不合法', trigger: 'blur' },
-          { type: 'string', max: 255, message: '邮箱最多255个字符' }
-        ],
-        password: [
-          { required: true, message: '密码不能为空', trigger: 'blur' },
-          { type: 'string', min: 6, max: 64, message: '密码最少6个字符最多64个字符' }
-        ],
-        confirmPassword: [
-          { required: true, message: '确认密码不能为空', trigger: 'blur' },
-          { validator: validatePassCheck, trigger: 'blur' }
-        ],
-        roleId: [
-          { required: true, message: '角色不能为空', trigger: 'blur' }
+        description: [
+          { type: 'string', max: 255, message: '分类描述最多255个字符' }
         ]
       }
     }
   },
   methods: {
-    getRoles () {
-      return new Promise((resolve, reject) => {
-        listRoles().then(res => {
-          this.roles = res.roles
-          let defaultRole = res.roles.find(item => item.name.toLowerCase() === 'user')
-          if (defaultRole) this.form.roleId = defaultRole.id
-          resolve()
-        }).catch(err => {
-          const response = err.response
-          const data = response.data
-          this.$Message.error(data.error.message)
-        })
-      })
-    },
     showModal () {
       this.modalVisible = true
     },
@@ -105,17 +95,17 @@ export default {
         if (valid) {
           let params = {
             name: this.form.name,
-            password: this.form.password,
-            roleId: this.form.roleId,
-            // extras
-            display_name: this.form.displayName,
-            email: this.form.email
+            description: this.form.description,
+            protected: this.form.protected
           }
+          let displayOrder = (this.form.displayOrder === 'custom' && this.form.displayOrderInput !== null) ? this.form.displayOrderInput : null
+          if (displayOrder !== null) params['display_order'] = displayOrder
+          else params['display_order2'] = this.form.displayOrder
           return new Promise((resolve, reject) => {
-            createUser(params).then(res => {
-              this.$Message.info('用户创建成功')
+            createCategory(params).then(res => {
+              this.$Message.info('分类创建成功')
               this.modalVisible = false
-              EventBus.$emit('userCreated')
+              EventBus.$emit('categoryCreated')
               resolve()
             }).catch(err => {
               this.loading = false
@@ -127,9 +117,7 @@ export default {
               let message = data.error.message
               if (response.status === 409) {
                 if (message.includes('name')) {
-                  message = '用户名已存在'
-                } else if (message.includes('email')) {
-                  message = '邮箱已存在'
+                  message = '分类名已存在'
                 }
               }
               this.$Message.error(message)
@@ -145,10 +133,17 @@ export default {
     },
     cancel () {
       // maybe do something like reset here
+    },
+    handleOrderChange (value) {
+      if (value === 'custom') {
+        this.inputVisible = 'inline-block'
+        this.$refs.customDisplayOrderInput.focus()
+      } else {
+        this.inputVisible = 'none'
+      }
     }
   },
   mounted () {
-    this.getRoles()
   }
 }
 </script>

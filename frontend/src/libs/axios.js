@@ -23,7 +23,7 @@ class httpRequest {
   interceptors (instance, url) {
     // 添加请求拦截器
     instance.interceptors.request.use(config => {
-      if (!config.url.includes('/tokens')) {
+      if (!(config.url.includes('/tokens') && config.method === 'post')) {
         config.headers['X-Auth-Token'] = Cookies.get(TOKEN_KEY)
       }
       // Spin.show()
@@ -51,13 +51,13 @@ class httpRequest {
       } else if (response.status === 500) {
         Message.error('服务内部错误')
       } else if (response.status === 401) {
-        Cookies.remove(TOKEN_KEY)
-        window.location.href = '/#/login'
-        Message.error('未登录，或登录失效，请登录')
-      } else {
-        // 对响应错误做点什么
-        return Promise.reject(error)
+        if (location.pathname !== '/login') {
+          Cookies.remove(TOKEN_KEY)
+          window.location.href = '/#/login'
+          Message.error('未登录，或登录失效，请登录')
+        }
       }
+      // 对响应错误做点什么
       return Promise.reject(error)
     })
   }

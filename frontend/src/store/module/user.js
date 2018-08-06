@@ -64,7 +64,7 @@ export default {
           commit('setAvatar', 'https://i.loli.net/2017/08/21/599a521472424.jpg')
           resolve(user)
         }).catch(err => {
-          reject(err)
+          return reject(err)
         })
       })
     }
