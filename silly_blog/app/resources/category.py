@@ -32,10 +32,11 @@ class CreateCategorySchema(Schema):
     @post_load
     def make_category(self, data):
         display_order = data.get("display_order")
+        parent_id = data.get("parent_id")
         display_order2 = data.pop("display_order2", None)
         if display_order is None and display_order2:
-            data["display_order"] = Category.get_default_order(display_order2)
-
+            data["display_order"] = Category.get_default_order(
+                parent_id=parent_id, method=display_order2)
         return Category.from_dict(data)
 
 
@@ -75,6 +76,12 @@ class CategoryResource(restful.Resource):
             return self._get_by_id(category_id)
 
         query = Category.query
+
+        # filter by parent_id
+        if "parent_id" in request.args:
+            # NOTE: if parent_id is empty string, it is equivalent to None
+            parent_id = request.args["parent_id"] or None
+            query = query.filter_by(parent_id=parent_id)
 
         # filter by name or description
         search_attrs = ("name", "description")

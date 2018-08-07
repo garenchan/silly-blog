@@ -330,29 +330,32 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
                                lazy="dynamic")
 
     @classmethod
-    def get_max_order(cls):
+    def get_max_order(cls, parent_id=None):
         """Returns max display order"""
-        return db.session.query(func.max(cls.display_order)).scalar()
+        return db.session.query(func.max(cls.display_order)).\
+            filter_by(parent_id=parent_id).scalar()
 
     @classmethod
-    def get_min_order(cls):
+    def get_min_order(cls, parent_id=None):
         """Returns min display order"""
-        return db.session.query(func.min(cls.display_order)).scalar()
+        return db.session.query(func.min(cls.display_order)).\
+            filter_by(parent_id=parent_id).scalar()
 
     @classmethod
-    def get_default_order(cls, method="max"):
+    def get_default_order(cls, parent_id=None, method="max"):
         """Returns default display order"""
         def _max():
-            max_order = cls.get_max_order()
+            max_order = cls.get_max_order(parent_id)
             return max_order + 1 if max_order else 1
 
         def _min():
-            min_order = cls.get_min_order()
+            min_order = cls.get_min_order(parent_id)
             return min_order - 1 if min_order else 1
 
         def _random():
             min_order, max_order = db.session.query(
-                func.min(cls.display_order), func.max(cls.display_order)).one()
+                func.min(cls.display_order), func.max(cls.display_order)).\
+                filter_by(parent_id=parent_id).one()
             return 1 if min_order is None else \
                 random.randint(min_order - 1, max_order + 1)
 
