@@ -8,12 +8,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from marshmallow import Schema, fields, post_load
-from marshmallow.validate import Length, Email
+from marshmallow.validate import Length
 
 from silly_blog.app import api, db, auth
 from silly_blog.app.models import Article
 from silly_blog.contrib.utils import (envelope_json_required, str2bool,
-                                      make_error_response)
+                                      make_error_response, parse_isotime)
 
 
 LOG = logging.getLogger(__name__)
@@ -34,8 +34,12 @@ class CreateArticleSchema(Schema):
         return Article.from_dict(data)
 
 
-@api.resource("/articles/", methods=["POST", "GET"], endpoint="articles")
-@api.resource("/articles/<string:article_id>", methods=["GET"], endpoint="article")
+@api.resource("/articles/",
+              methods=["POST", "GET"],
+              endpoint="articles")
+@api.resource("/articles/<string:article_id>",
+              methods=["GET"],
+              endpoint="article")
 class ArticleResource(restful.Resource):
     """Controller for article resources"""
 
@@ -47,6 +51,7 @@ class ArticleResource(restful.Resource):
     def _article_to_dict(article, content=False):
         """Get a dict of article's details"""
         info = article.to_dict(content=content)
+        info["user"] = article.user.name
         info["category"] = article.category.name
         info["source"] = article.source.name
         info["tags"] = [tag.name for tag in article.tags]
@@ -83,43 +88,61 @@ class ArticleResource(restful.Resource):
         if source_id is not None:
             query = query.filter_by(source_id=source_id)
 
+        # since
+        since = request.args.get("since")
+        if since is not None:
+            try:
+                since = parse_isotime(since)
+            except ValueError as ex:
+                return make_error_response(400, str(ex))
+            else:
+                query = query.filter(Article.updated_at >= since)
+
         # order by related
         sort = request.args.get("sort", "published_at")
         sort_attribute = getattr(Article, sort, None)
         if not isinstance(sort_attribute, InstrumentedAttribute):
             return make_error_response(400, "Unknown sort %r" % sort)
-        order = request.args.get("order", "desc")
+        direction = request.args.get("direction", "desc")
         try:
-            sort_method = getattr(sort_attribute, order)
+            sort_method = getattr(sort_attribute, direction)
             sort_exp = sort_method()
             if not isinstance(sort_exp, UnaryExpression):
                 raise TypeError("Not a unary expression!")
         except (AttributeError, TypeError):
-            return make_error_response(400, "Unknown order %r" % order)
+            return make_error_response(400, "Unknown direction %r" % direction)
         else:
             query = query.order_by(sort_exp)
 
+        # before offset and limit, we get the entry total number
+        total = query.count()
+
         # offset limit related
-        offset = request.args.get("offset", 0)
-        if offset != 0:
+        page = request.args.get("page", None)
+        pagesize = request.args.get("pagesize", None)
+        if page and pagesize:
             try:
-                offset = int(offset)
+                page = int(page)
             except ValueError:
-                return make_error_response(400, "Unknown offset %r" % offset)
-        query = query.offset(offset)
-        limit = request.args.get("limit", 10)
-        if limit != 10:
+                return make_error_response(400, "Unknown page %r" % page)
             try:
-                limit = int(limit)
+                pagesize = int(pagesize)
             except ValueError:
-                return make_error_response(400, "Unknown limit %r" % limit)
-        query = query.limit(limit)
+                return make_error_response(400, "Unknown pagesize %r" % pagesize)
+
+            offset = (page - 1) * pagesize  # page starts from 1
+            if offset < 0:
+                offset = 0
+            query = query.offset(offset).limit(pagesize)
 
         articles = query.all()
         # with content or not
         content = request.args.get("content", False)
-        return {"articles": [self._article_to_dict(article, content=content)
-                             for article in articles]}
+        return {
+            "articles": [self._article_to_dict(article, content=content)
+                         for article in articles],
+            "total": total,
+        }
 
     @auth.login_required
     @envelope_json_required("article")

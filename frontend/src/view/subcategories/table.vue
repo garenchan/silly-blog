@@ -9,7 +9,6 @@
               editable searchable
               search-place="top"
               :loading="loading"
-              :toolbox="toolbox"
               v-model="tableData"
               :columns="columns"
               @on-sort-change="handleSortChange"

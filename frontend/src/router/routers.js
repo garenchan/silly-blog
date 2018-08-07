@@ -97,6 +97,25 @@ export const appRouter = [
         component: () => import('@/view/categories')
       }
     ]
+  },
+  {
+    path: '/admin',
+    name: 'articles',
+    component: Main,
+    meta: {
+      roles: ["admin"]
+    },
+    children: [
+      {
+        path: 'articles',
+        name: '_articles',
+        meta: {
+          icon: 'logo-pinterest',
+          title: '文章管理'
+        },
+        component: () => import('@/view/articles')
+      }
+    ]
   }
 ]
 

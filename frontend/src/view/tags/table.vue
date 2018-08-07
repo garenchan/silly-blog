@@ -5,7 +5,6 @@
               editable searchable
               search-place="top"
               :loading="loading"
-              :toolbox="toolbox"
               v-model="tableData"
               :columns="columns"
               @on-sort-change="handleSortChange"
@@ -85,10 +84,7 @@ export default {
           ]
         }
       ],
-      loading: false,
-      toolbox: {
-        'add': AddTag
-      }
+      loading: false
     }
   },
   methods: {

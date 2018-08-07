@@ -95,7 +95,7 @@ class TagResource(restful.Resource):
             if not isinstance(sort_exp, UnaryExpression):
                 raise TypeError("Not a unary expression!")
         except (AttributeError, TypeError):
-            return make_error_response(400, "Unknown order %r" % direction)
+            return make_error_response(400, "Unknown direction %r" % direction)
         else:
             query = query.order_by(sort_exp)
 
