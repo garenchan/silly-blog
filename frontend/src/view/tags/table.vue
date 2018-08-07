@@ -12,7 +12,9 @@
               @on-save-edit="handleEdit"
               :custom-search="true"
               @on-search="handleSearch"
-              @on-delete="handleDelete"/>
+              @on-delete="handleDelete">
+        <AddTag slot="toolbox"/>
+      </tables>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
             <Page :total="dataTotal" :page-size="pageSize" :current="currentPage" @on-change="changePage"></Page>

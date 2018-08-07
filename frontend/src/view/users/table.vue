@@ -13,7 +13,9 @@
               :custom-search="true"
               @on-search="handleSearch"
               @on-delete="handleDelete"
-              @on-state-change="handleStateChange"/>
+              @on-state-change="handleStateChange">
+        <AddUser slot="toolbox"/>
+      </tables>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
             <Page :total="dataTotal" :page-size="pageSize" :current="currentPage" @on-change="changePage"></Page>
@@ -115,10 +117,7 @@ export default {
           ]
         }
       ],
-      loading: false,
-      toolbox: {
-        'add': AddUser
-      }
+      loading: false
     }
   },
   methods: {

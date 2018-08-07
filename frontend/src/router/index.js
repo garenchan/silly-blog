@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import routes from './routers'
+import { routes } from './routers'
 import store from '@/store'
 import iView from 'iview'
 import { getToken } from '@/libs/util'

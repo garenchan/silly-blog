@@ -14,6 +14,13 @@ export const listCategory = ({since, sort, direction, page, pageSize, ...filters
   })
 }
 
+export const getCategory = (id) => {
+  return axios.request({
+    url: `categories/${id}`,
+    method: 'get'
+  })
+}
+
 export const createCategory = ({name, ...extras}) => {
   let data = {
     category: Object.assign({

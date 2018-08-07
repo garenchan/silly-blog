@@ -107,11 +107,15 @@ export default {
     handleCloseTag (res, type, name) {
       const nextName = getNextName(this.tagNavList, name)
       this.setTagNavList(res)
-      if (type === 'all') this.turnToPage('home')
+      if (type === 'all') this.$router.push({ name: 'home' })
       else if (this.$route.name === name) this.$router.push({ name: nextName })
     },
     handleClick (item) {
-      this.turnToPage(item.name)
+      let name = item.name
+      let routerObj = { name }
+      if (item.params) routerObj.params = item.params
+      if (item.query) routerObj.query = item.query
+      this.$router.push(routerObj)
     }
   },
   watch: {

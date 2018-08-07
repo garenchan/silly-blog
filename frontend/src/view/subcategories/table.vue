@@ -1,6 +1,10 @@
 <template>
   <div>
     <Card>
+      <p slot="title">
+        <Icon type="ios-help-buoy"></Icon>
+        所属分类: {{ name }}
+      </p>
       <tables ref="table"
               editable searchable
               search-place="top"
@@ -15,7 +19,7 @@
               @on-delete="handleDelete"
               @on-order-change="handleOrderChange"
               @on-protected-change="handleProtectedChange">
-        <AddCategory slot="toolbox"/>
+        <AddCategory slot="toolbox" :parentId="id" :parentName="name"/>
       </tables>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
@@ -29,17 +33,20 @@
 <script>
 import Tables from '_c/tables'
 import AddCategory from './add.vue'
-import { listCategory, updateCategory, deleteCategory } from '@/api/category'
+import { listCategory, getCategory, updateCategory, deleteCategory } from '@/api/category'
 import { EventBus } from '@/libs/bus'
 
 export default {
-  name: 'CategoryTable',
+  name: 'SubCategoryTable',
   components: {
     Tables,
     AddCategory
   },
   data () {
     return {
+      // 当前一级分类的信息
+      id: this.$route.params.category_id,
+      name: '',
       // 初始化数据总条数
       dataTotal: 0,
       // 分页显示条数默认为10
@@ -54,12 +61,12 @@ export default {
       searchValue: '',
       tableData: [],
       columns: [
-        {title: 'Name', key: 'name', width: 160, editable: true, sortable: true, searchable: true},
+        // {type: 'selection', key: 'id', width: 60, align: 'center'},
+        {title: 'Name', key: 'name', editable: true, sortable: true, searchable: true},
         {title: 'Description', key: 'description', editable: true, sortable: true, searchable: true},
         {
           title: 'Order',
           key: 'display_order',
-          width: 160,
           sortable: true,
           sortType: 'asc',
           render: (h, params) => {
@@ -79,11 +86,11 @@ export default {
         {
           title: 'Protected',
           key: 'protected',
-          width: 160,
           sortable: false,
           render: (h, params) => {
             return h('i-switch', {
               props: {
+                // type: 'primary',
                 size: 'large',
                 value: params.row.protected,
                 loading: false
@@ -111,31 +118,11 @@ export default {
           // options: ['delete'],
           button: [
             (h, params, vm) => {
-              return h('Button', {
-                props: {
-                  type: 'dashed',
-                  icon: 'md-help-buoy'
-                },
-                style: {
-                  marginRight: '5px'
-                },
-                on: {
-                  click: () => {
-                    let args = { category_id: params.row.id }
-                    this.$router.push({
-                      name: 'subcategories',
-                      params: args
-                    })
-                  }
-                }
-              }, '二级分类')
-            },
-            (h, params, vm) => {
               let name = params.row.name
               return h('Poptip', {
                 props: {
                   confirm: true,
-                  title: `你确定要删除分类"${name}"吗?`
+                  title: `你确定要删除二级分类"${name}"吗?`
                 },
                 on: {
                   'on-ok': () => {
@@ -148,7 +135,7 @@ export default {
                     type: 'dashed',
                     icon: 'md-trash'
                   }
-                }, '删除分类')
+                }, '删除二级分类')
               ])
             }
           ]
@@ -158,6 +145,15 @@ export default {
     }
   },
   methods: {
+    getCategoryInfo () {
+      return new Promise((resolve, reject) => {
+        getCategory(this.id).then(res => {
+          this.name = res.category.name
+        }).catch(err => {
+          console.log(err)
+        })
+      })
+    },
     getTableData () {
       this.loading = true
       let params = {
@@ -165,7 +161,7 @@ export default {
         pageSize: this.pageSize,
         sort: this.sortColumn,
         direction: this.SortDirection,
-        parent_id: ''
+        parent_id: this.id
       }
       if (this.searchKey) params[this.searchKey] = this.searchValue
       return new Promise((resolve, reject) => {
@@ -193,7 +189,7 @@ export default {
       return new Promise((resolve, reject) => {
         deleteCategory(id).then(res => {
           this.loading = false
-          this.$Message.info(`分类${name}删除成功`)
+          this.$Message.info(`二级分类${name}删除成功`)
           this.getTableData()
           resolve()
         }).catch(err => {
@@ -201,7 +197,7 @@ export default {
           const response = err.response
           const data = response.data
           if ([404].includes(response.status)) {
-            this.$Message.info(`分类${name}删除成功`)
+            this.$Message.info(`二级分类${name}删除成功`)
             this.getTableData()
           } else {
             this.$Message.error(data.error.message)
@@ -240,7 +236,7 @@ export default {
       return new Promise((resolve, reject) => {
         updateCategory(id, data).then(res => {
           this.loading = false
-          this.$Message.info('分类编辑成功')
+          this.$Message.info('二级分类编辑成功')
           this.$set(this.tableData[params.index], key, res.category[key])
           this.$set(this.tableData[params.index], 'updated_at', res.category.updated_at)
           resolve()
@@ -267,7 +263,7 @@ export default {
       return new Promise((resolve, reject) => {
         updateCategory(id, {display_order: curValue}).then(res => {
           this.loading = false
-          this.$Message.info(`分类"${name}"调整显示顺序成功`)
+          this.$Message.info(`二级分类"${name}"调整显示顺序成功`)
           this.getTableData()
           resolve()
         }).catch(err => {
@@ -291,7 +287,7 @@ export default {
       return new Promise((resolve, reject) => {
         updateCategory(id, {protected: curValue}).then(res => {
           this.loading = false
-          this.$Message.info(`分类"${name}"${action}成功`)
+          this.$Message.info(`二级分类"${name}"${action}成功`)
           this.$set(this.tableData[params.index], 'protected', res.category.protected)
           resolve()
         }).catch(err => {
@@ -310,6 +306,7 @@ export default {
     EventBus.$on('categoryCreated', () => {
       this.getTableData()
     })
+    this.getCategoryInfo()
     this.getTableData()
   }
 }
