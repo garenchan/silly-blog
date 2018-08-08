@@ -20,12 +20,10 @@ class SourceResource(restful.Resource):
     @staticmethod
     def _get_by_id(source_id):
         source = Source.query.get(source_id)
-        if source:
-            return {
-                "source": source.to_dict()
-            }
-        else:
-            return make_error_response(404, "source %r not found" % source_id)
+        if not source:
+            return make_error_response(404, "Source %r not found" % source_id)
+
+        return {"source": source.to_dict()}
 
     def get(self, source_id=None):
         """List sources or show details of a specified one."""

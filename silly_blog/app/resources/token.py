@@ -34,6 +34,7 @@ class AuthResource(restful.Resource):
         user = auth.current_user
         if not user:
             return make_error_response(401, "Unauthorized Access")
+
         return {
             "token": {
                 "id": auth.get_token(),

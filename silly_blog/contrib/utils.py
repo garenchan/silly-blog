@@ -31,6 +31,18 @@ def make_error_response(status, message, code=None):
     return response
 
 
+def _check_json_body():
+    """Check whether request content is json"""
+    if not request.is_json:
+        return make_error_response(400, "JSON Params Expected")
+    try:
+        # force parse body as json
+        _ = request.get_json()
+    except BadRequest:
+        return make_error_response(400, "JSON Params Expected")
+    return None
+
+
 def json_required(func):
     """A decorator for view handler.
     Confirm the Content-Type of the request is json.
@@ -42,14 +54,7 @@ def json_required(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if not request.is_json:
-            return make_error_response(400, "JSON Params Expected")
-        try:
-            # force parse body as json
-            _ = request.get_json()
-        except BadRequest:
-            return make_error_response(400, "JSON Params Expected")
-        return func(*args, **kwargs)
+        return _check_json_body() or func(*args, **kwargs)
 
     return wrapper
 
@@ -66,9 +71,9 @@ def envelope_json_required(envelope):
         }
     We uncover the envelope, after that we can access sealed dict like this:
         g.envelope -> {
-                                "arg1": "username",
-                                "arg2": "password",
-                            }
+                          "arg1": "username",
+                          "arg2": "password",
+                      }
     :param envelope: envelope for request arguments
     :type envelope: str
     :return: a wrapper function
@@ -79,20 +84,17 @@ def envelope_json_required(envelope):
     def decorating_function(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if not request.is_json:
-                return make_error_response(400, "JSON Params Expected")
-            try:
-                json = request.get_json()
-            except BadRequest:
-                return make_error_response(400, "Invalid JSON Params")
-            else:
-                if not isinstance(json, dict) or \
-                        not isinstance(json.get(envelope), dict):
-                    return make_error_response(400, "Invalid Params")
-                # NOTE: don't set envelope attribute on `request`, because it
-                # maybe override the original attribute value, `g` namespace
-                # is more cleaner.
-                setattr(g, envelope, json[envelope])
+            res = _check_json_body()
+            if res:
+                return res
+
+            if not isinstance(json, dict) or \
+                    not isinstance(json.get(envelope), dict):
+                return make_error_response(400, "Invalid Params")
+            # NOTE: don't set envelope attribute on `request`, because it
+            # maybe override the original attribute value, `g` namespace
+            # is more cleaner.
+            setattr(g, envelope, json[envelope])
             return func(*args, **kwargs)
 
         return wrapper

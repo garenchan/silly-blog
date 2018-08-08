@@ -22,12 +22,10 @@ class RoleResource(restful.Resource):
     @staticmethod
     def _get_by_id(role_id):
         role = Role.query.get(role_id)
-        if role:
-            return {
-                "role": role.to_dict()
-            }
-        else:
-            return make_error_response(404, "role %r not found" % role_id)
+        if not role:
+            return make_error_response(404, "Role %r not found" % role_id)
+
+        return {"role": role.to_dict()}
 
     def get(self, role_id=None):
         """List roles or show details of a specified one."""

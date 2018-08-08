@@ -13,7 +13,7 @@ from werkzeug.exceptions import HTTPException
 
 from silly_blog.configs import get_config
 from silly_blog.contrib.auth import HTTPTokenAuth
-from silly_blog.contrib.jwt import JSONWebSignature
+from silly_blog.contrib.jwtoken import JSONWebSignature
 from silly_blog.contrib.utils import make_error_response
 
 

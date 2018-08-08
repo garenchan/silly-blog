@@ -51,12 +51,10 @@ class TagResource(restful.Resource):
     @staticmethod
     def _get_by_id(tag_id):
         tag = Tag.query.get(tag_id)
-        if tag:
-            return {
-                "tag": tag.to_dict()
-            }
-        else:
+        if not tag:
             return make_error_response(404, "Tag %r not found" % tag_id)
+        
+        return {"tag": tag.to_dict()}
 
     def get(self, tag_id=None):
         """List tags or show details of a specified one."""

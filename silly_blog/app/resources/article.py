@@ -71,20 +71,20 @@ class ArticleResource(restful.Resource):
 
         query = Article.query
         # filter by `published` field, `None` means nothing to do.
-        published = request.args.get("published", None)
+        published = request.args.get("published")
         if published is not None:
             published = str2bool(published)
             query = query.filter_by(published=published)
         # filter by `user_id`
-        user_id = request.args.get("user_id", None)
+        user_id = request.args.get("user_id")
         if user_id is not None:
             query = query.filter_by(user_id=user_id)
         # filter by `category_id`
-        category_id = request.args.get("category_id", None)
+        category_id = request.args.get("category_id")
         if category_id is not None:
             query = query.filter_by(category_id=category_id)
         # filter by `source_id`
-        source_id = request.args.get("source_id", None)
+        source_id = request.args.get("source_id")
         if source_id is not None:
             query = query.filter_by(source_id=source_id)
 

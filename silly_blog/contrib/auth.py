@@ -41,14 +41,14 @@ class HTTPTokenAuth(object):
         return self._keys
 
     @keys.setter
-    def keys(self, _keys):
-        if isinstance(_keys, str) or not isinstance(_keys, Iterable):
-            _keys = [_keys]
-        for key in _keys:
+    def keys(self, value):
+        if isinstance(value, str) or not isinstance(value, Iterable):
+            value = [value]
+        for key in value:
             if not isinstance(key, str):
-                raise ValueError("`keys` should be a str or"
+                raise ValueError("`value` should be a str or"
                                  "a collection of strs")
-        self._keys = _keys
+        self._keys = value
 
     def get_token(self):
         """Get token from request headers"""
@@ -81,10 +81,7 @@ class HTTPTokenAuth(object):
 
     def load_user(self):
         token = self.get_token()
-
-        user = None
-        if self._user_callback:
-            user = self._user_callback(token)
+        user = self._user_callback(token) if self._user_callback else None
         self._update_request_context_with_user(user)
         return user
 

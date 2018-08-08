@@ -68,6 +68,7 @@ class CategoryResource(restful.Resource):
         category = Category.query.get(category_id)
         if not category:
             return make_error_response(404, "Category %r not found" % category_id)
+
         return {"category": category.to_dict()}
 
     def get(self, category_id=None):
