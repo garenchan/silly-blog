@@ -88,6 +88,7 @@ def envelope_json_required(envelope):
             if res:
                 return res
 
+            json = request.json
             if not isinstance(json, dict) or \
                     not isinstance(json.get(envelope), dict):
                 return make_error_response(400, "Invalid Params")
