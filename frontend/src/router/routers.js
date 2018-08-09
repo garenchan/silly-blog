@@ -1,4 +1,18 @@
 import Main from '@/view/main'
+import store from '@/store'
+
+export const testRouter = {
+  path: '/',
+  name: 'index',
+  meta: {
+    title: '首页',
+    hideInMenu: true,
+    notCache: true
+  },
+  component: () => {
+    return import('@/view/admin/home')
+  }
+}
 
 export const loginRouter = {
   path: '/login',
@@ -10,118 +24,196 @@ export const loginRouter = {
   component: () => import('@/view/login/login.vue')
 }
 
-// 作为Main组件的子页面展示但是不在左侧菜单显示的路由写在这里
-export const otherRouter = {
+export const homeRouter = {
   path: '/',
-  name: 'otherRouter',
-  redirect: '/home',
+  name: '_home',
   component: Main,
+  meta: {
+    hideInMenu: true,
+    notCache: true
+  },
   children: [
     {
-      path: 'home',
+      path: '/home',
       name: 'home',
       meta: {
         title: '首页',
         hideInMenu: true,
         notCache: true
       },
-      component: () => import('@/view/single-page/home')
-    },
-    {
-      path: 'admin/category/:category_id/subs',
-      name: 'subcategories',
-      meta: {
-        icon: 'ios-switch',
-        title: '二级分类',
-        roles: ["admin"]
-      },
-      component: () => import('@/view/subcategories')
+      component: () => {
+        if (store.state.user.role === 'admin') return import('@/view/admin/home')
+        else if (store.state.user.role === 'user') return import('@/view/user/home')
+      }
     }
   ]
 }
 
-export const appRouter = [
+export const adminPathPrefix = '/admin'
+
+export const adminRouters = [
   {
-    path: '/admin',
-    name: 'users',
-    component: Main,
+    path: adminPathPrefix,
+    name: 'admin',
+    redirect: '/home',
     meta: {
+      title: '管理员',
+      hideInMenu: true,
+      roles: ["admin"]
+    }
+  },
+  {
+    path: adminPathPrefix,
+    name: '_admin_users',
+    meta: {
+      hide: true,
       roles: ["admin"]
     },
+    component: Main,
     children: [
       {
         path: 'users',
-        name: '_users',
+        name: 'admin_users',
         meta: {
           icon: '_qq',
-          title: '用户管理'
+          title: '用户管理',
+          roles: ["admin"]
         },
-        component: () => import('@/view/users')
+        component: () => import('@/view/admin/users')
       }
     ]
   },
   {
-    path: '/admin',
-    name: 'tags',
-    component: Main,
+    path: adminPathPrefix,
+    name: '_admin_tags',
     meta: {
+      hide: true,
       roles: ["admin"]
     },
+    component: Main,
     children: [
       {
         path: 'tags',
-        name: '_tags',
+        name: 'admin_tags',
         meta: {
           icon: 'ios-pricetags',
-          title: '标签管理'
+          title: '标签管理',
+          roles: ["admin"]
         },
-        component: () => import('@/view/tags')
+        component: () => import('@/view/admin/tags')
       }
     ]
   },
   {
-    path: '/admin',
-    name: 'categories',
-    component: Main,
+    path: adminPathPrefix,
+    name: '_admin_categories',
     meta: {
+      hide: true,
       roles: ["admin"]
     },
+    component: Main,
     children: [
       {
         path: 'categories',
-        name: '_categories',
+        name: 'admin_categories',
         meta: {
           icon: 'ios-switch',
-          title: '分类管理'
+          title: '分类管理',
+          roles: ["admin"]
         },
-        component: () => import('@/view/categories')
+        component: () => import('@/view/admin/categories')
       }
     ]
   },
   {
-    path: '/admin',
-    name: 'articles',
-    component: Main,
+    path: adminPathPrefix,
+    name: '_admin_subcategories',
     meta: {
+      hideInMenu: true,
       roles: ["admin"]
     },
+    component: Main,
+    children: [
+      {
+        path: 'category/:category_id/subs',
+        name: 'admin_subcategories',
+        meta: {
+          icon: 'ios-switch',
+          title: '二级分类',
+          roles: ["admin"]
+        },
+        component: () => import('@/view/admin/subcategories')
+      }
+    ]
+  },
+  {
+    path: adminPathPrefix,
+    name: '_admin_articles',
+    meta: {
+      hide: true,
+      roles: ["admin"]
+    },
+    component: Main,
     children: [
       {
         path: 'articles',
-        name: '_articles',
+        name: 'admin_articles',
+        meta: {
+          icon: 'md-bookmarks',
+          title: '文章管理',
+          roles: ["admin"]
+        },
+        component: () => import('@/view/admin/articles')
+      }
+    ]
+  },
+  {
+    path: adminPathPrefix,
+    name: '_admin_articles_post',
+    meta: {
+      hideInMenu: true,
+      roles: ["admin"]
+    },
+    component: Main,
+    children: [
+      {
+        path: 'article/post',
+        name: 'admin_article_post',
         meta: {
           icon: 'logo-pinterest',
-          title: '文章管理'
+          title: '发表文章',
+          roles: ["admin"]
         },
-        component: () => import('@/view/articles')
+        component: () => import('@/view/admin/articles/post')
       }
     ]
   }
 ]
 
+export const errorRouters = [
+  {
+    path: '/401',
+    name: 'error_401',
+    meta: {
+      hideInMenu: true
+    },
+    component: () => import('@/view/errors/401.vue')
+  },
+  {
+    path: '*',
+    name: 'error_404',
+    meta: {
+      hideInMenu: true
+    },
+    component: () => import('@/view/errors/404.vue')
+  },
+]
+
 // 所有上面定义的路由都要写在下面的routes里
 export const routes = [
+  testRouter,
   loginRouter,
-  otherRouter,
-  ...appRouter
+  homeRouter,
+  ...adminRouters,
+  ...errorRouters
 ]

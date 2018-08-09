@@ -122,7 +122,7 @@ export default {
                   click: () => {
                     let args = { category_id: params.row.id }
                     this.$router.push({
-                      name: 'subcategories',
+                      name: 'admin_subcategories',
                       params: args
                     })
                   }

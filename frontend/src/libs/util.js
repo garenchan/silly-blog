@@ -52,7 +52,7 @@ export const getMenuByRouter = (list, role) => {
  * @param {Array} routeMetched 当前路由metched
  * @returns {Array}
  */
-export const getBreadCrumbList = (routeMetched) => {
+export const getBreadCrumbList = (routeMetched, homeRoute) => {
   let res = routeMetched.filter(item => {
     return item.meta === undefined || !item.meta.hide
   }).map(item => {
@@ -66,10 +66,7 @@ export const getBreadCrumbList = (routeMetched) => {
   res = res.filter(item => {
     return !item.meta.hideInMenu
   })
-  return [{
-    name: 'home',
-    to: '/home'
-  }, ...res]
+  return [Object.assign(homeRoute, { to: homeRoute.path }), ...res]
 }
 
 export const showTitle = (item, vm) => vm.$config.useI18n ? vm.$t(item.name) : ((item.meta && item.meta.title) || item.name)
@@ -117,9 +114,8 @@ export const getNewTagList = (list, newRoute) => {
   const { name, path, meta, params, query } = newRoute
   let newList = [...list]
   let tag = newList.find(item => item.name === name)
-  if (tag) {
-    Object.assign(tag, { name, path, meta, params, query })
-  } else newList.push({ name, path, meta, params, query })
+  if (tag) Object.assign(tag, { name, path, meta, params, query })
+  else newList.push({ name, path, meta, params, query })
   return newList
 }
 
@@ -138,23 +134,17 @@ const hasAccess = (role, route) => {
  * @description 用户是否可跳转到该页
  */
 export const canTurnTo = (name, role, routes) => {
-  const getHasAccessRouteNames = (list) => {
-    let res = []
-    list.forEach(item => {
+  const routePermissionJudge = (list) => {
+    return list.some(item => {
       if (item.children && item.children.length) {
-        res = [].concat(res, getHasAccessRouteNames(item.children))
-      } else {
-        if (item.meta && item.meta.roles) {
-          if (hasAccess(role, item)) res.push(item.name)
-        } else {
-          res.push(item.name)
-        }
+        return routePermissionJudge(item.children)
+      } else if (item.name === name) {
+        return hasAccess(role, item)
       }
     })
-    return res
   }
-  const canTurnToNames = getHasAccessRouteNames(routes)
-  return canTurnToNames.indexOf(name) > -1
+
+  return routePermissionJudge(routes)
 }
 
 /**

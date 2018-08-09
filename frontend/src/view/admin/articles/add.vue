@@ -1,35 +1,12 @@
 <template>
-  <Button type="dashed" style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 文章发布
-    <Modal v-model="modalVisible"
+  <Button type="dashed" style="margin-left: 2px;" @click="showModal"><Icon type="md-add-circle" /> 发表文章
+    <!--<Modal v-model="modalVisible"
            title="文章发布"
            fullscreen
            :loading="loading"
            @on-ok="handleSubmit"
            @on-cancel="cancel">
-      <Form ref="createForm" :model="form" :rules="rules" label-position="top">
-        <FormItem label="分类名" prop="name">
-          <Input v-model="form.name" placeholder="请输入分类名" clearable></Input>
-        </FormItem>
-        <FormItem label="分类描述" prop="description">
-          <Input v-model="form.description" type="textarea" :autosize="{minRows: 2}" placeholder="请输入分类描述" clearable></Input>
-        </FormItem>
-        <FormItem label="显示顺序" prop="displayOrder">
-          <RadioGroup v-model="form.displayOrder" type="button" @on-change="handleOrderChange">
-            <Radio label="min">最前</Radio>
-            <Radio label="max">最后</Radio>
-            <Radio label="random">随机</Radio>
-            <Radio label="custom">自定义</Radio>
-          </RadioGroup>
-          <InputNumber v-model="form.displayOrderInput" ref="customDisplayOrderInput" :style="{ marginLeft: '10px', display: inputVisible }" placeholder="请输入值"></InputNumber>
-        </FormItem>
-        <FormItem label="受保护的" prop="protected">
-          <i-switch v-model="form.protected" size="large">
-            <span slot="open">隐藏</span>
-            <span slot="close">公开</span>
-          </i-switch>
-        </FormItem>
-      </Form>
-    </Modal>
+    </Modal>-->
   </Button>
 </template>
 
@@ -64,7 +41,10 @@ export default {
   },
   methods: {
     showModal () {
-      this.modalVisible = true
+      // this.modalVisible = true
+      this.$router.push({
+        name: 'admin_article_post'
+      })
     },
     handleSubmit () {
       this.$refs.createForm.validate((valid) => {

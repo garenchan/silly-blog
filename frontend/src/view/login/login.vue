@@ -38,7 +38,7 @@ export default {
         this.loading = false
         this.getUserInfo().then(res => {
           this.$router.push({
-            name: 'home'
+            name: this.$route.query.next || 'home'
           })
         })
       }).catch(err => {
