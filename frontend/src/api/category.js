@@ -1,6 +1,6 @@
 import axios from '@/libs/api.request'
 
-export const listCategory = ({since, sort, direction, page, pageSize, ...filters}) => {
+export const listCategories = ({since, sort, direction, page, pageSize, ...filters}) => {
   return axios.request({
     url: 'categories',
     method: 'get',

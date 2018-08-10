@@ -28,7 +28,7 @@
 <script>
 import Tables from '_c/tables'
 import AddCategory from './add.vue'
-import { listCategory, updateCategory, deleteCategory } from '@/api/category'
+import { listCategories, updateCategory, deleteCategory } from '@/api/category'
 import { EventBus } from '@/libs/bus'
 
 export default {
@@ -168,7 +168,7 @@ export default {
       }
       if (this.searchKey) params[this.searchKey] = this.searchValue
       return new Promise((resolve, reject) => {
-        listCategory(params).then(res => {
+        listCategories(params).then(res => {
           this.tableData = res.categories
           this.dataTotal = res.total
           this.loading = false

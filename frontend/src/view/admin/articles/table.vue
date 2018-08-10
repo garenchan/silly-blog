@@ -25,7 +25,7 @@
 <script>
 import Tables from '_c/tables'
 import AddArticle from './add.vue'
-import { listArticle } from '@/api/article'
+import { listArticles } from '@/api/article'
 import { EventBus } from '@/libs/bus'
 
 export default {
@@ -71,7 +71,7 @@ export default {
       }
       if (this.searchKey) params[this.searchKey] = this.searchValue
       return new Promise((resolve, reject) => {
-        listArticle(params).then(res => {
+        listArticles(params).then(res => {
           this.tableData = res.articles
           this.dataTotal = res.total
           this.loading = false

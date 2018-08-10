@@ -26,6 +26,10 @@
             <keep-alive :include="cacheList">
               <router-view/>
             </keep-alive>
+            <!--<keep-alive>
+              <router-view v-if="!($route.meta && $route.meta.notCache)"></router-view>
+            </keep-alive>
+            <router-view v-if="$route.meta && $route.meta.notCache"></router-view>-->
           </Content>
         </Layout>
       </Content>
