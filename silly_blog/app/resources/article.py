@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import datetime
 import logging
 
 from flask import g, request
 import flask_restful as restful
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DatabaseError, IntegrityError
 from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length
 
 from silly_blog.app import api, db, auth
-from silly_blog.app.models import Article
+from silly_blog.app.models import Article, Tag
 from silly_blog.contrib.utils import (envelope_json_required, str2bool,
                                       make_error_response, parse_isotime)
 
@@ -25,13 +26,11 @@ class CreateArticleSchema(Schema):
     summary = fields.Str(validate=Length(max=255))
     content = fields.Str(required=True)
     published = fields.Boolean()
+    protected = fields.Boolean()
     category_id = fields.Str(required=True, validate=Length(max=64))
     source_id = fields.Str(required=True, validate=Length(max=64))
-    tags = fields.Dict()
-
-    @post_load
-    def make_article(self, data):
-        return Article.from_dict(data)
+    user_id = fields.Str(validate=Length(max=64))
+    tags = fields.List(fields.Dict())
 
 
 @api.resource("/articles/",
@@ -165,3 +164,38 @@ class ArticleResource(restful.Resource):
         result = self.post_schema.load(g.article)
         if result.errors:
             return make_error_response(400, result.errors)
+
+        tags = result.data.pop("tags", [])
+        # NOTE: we respect `user_id` only when `current_user` is admin.
+        user_id = result.data.pop("user_id", None)
+        published = result.data.get("published")
+        article = Article.from_dict(result.data)
+        article.user = auth.current_user
+        if published:
+            article.published_at = datetime.datetime.utcnow()
+
+        for _tag in tags:
+            tag_id = _tag.get("id")
+            tag_name = _tag.get("name")
+            tag = None
+            if tag_id:
+                tag = Tag.query.get(tag_id)
+            elif tag_name:
+                tag = Tag(name=tag_name)
+                try:
+                    db.session.add(tag)
+                    db.session.commit()
+                except IntegrityError:
+                    db.session.rollback()
+                    tag = Tag.query.filter_by(name=tag_name).first()
+            if tag:
+                article.tags.append(tag)
+
+        try:
+            db.session.add(article)
+            db.session.commit()
+        except DatabaseError as ex:
+            LOG.exception("An unknown db error occurred")
+            return make_error_response(500, "DB Error", ex.code)
+        else:
+            return {"article": self._article_to_dict(article)}

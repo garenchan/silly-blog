@@ -411,7 +411,7 @@ class Source(UUIDMixin, ModelBase):
 
     @staticmethod
     def insert_default_values():
-        names = ("original", "reproduction", "translation")
+        names = ("原创", "转载", "翻译")
         for name in names:
             source = Source(name=name)
             db.session.add(source)
@@ -430,13 +430,15 @@ class Article(UUIDMixin, TimestampMixin, ModelBase):
     views = db.Column(db.Integer, default=0)
     published = db.Column(db.Boolean, default=False)
     published_at = db.Column(db.TIMESTAMP, nullable=True)
+    protected = db.Column(db.Boolean, default=False)
     user_id = db.Column(db.String(64),
                         db.ForeignKey("users.id", ondelete="SET NULL"))
     category_id = db.Column(db.String(64),
                             db.ForeignKey("categories.id", ondelete="SET NULL"))
     source_id = db.Column(db.String(64),
                           db.ForeignKey("sources.id", ondelete="SET NULL"))
-
+    # tags = db.relationship("Tag", secondary=article_tag_mapping,
+    # backref="articles", lazy="dynamic")
     comments = db.relationship("Comment",
                                backref=db.backref("article", lazy="subquery"),
                                lazy="dynamic")
