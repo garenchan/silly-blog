@@ -380,10 +380,12 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
 article_tag_mapping = db.Table(
     "article_tag_mapping",
     ModelBase.metadata,
+    db.Column("id", db.String(64), primary_key=True, default=_get_uuid),
     db.Column("article_id", db.String(64),
               db.ForeignKey("articles.id", ondelete="CASCADE")),
     db.Column("tag_id", db.String(64),
               db.ForeignKey("tags.id", ondelete="CASCADE")),
+    db.Column("created_at", db.TIMESTAMP, default=datetime.datetime.utcnow),
     db.PrimaryKeyConstraint("article_id", "tag_id"),
 )
 
@@ -395,7 +397,7 @@ class Tag(UUIDMixin, TimestampMixin, ModelBase):
     name = db.Column(db.String(64), unique=True, nullable=False)
 
     articles = db.relationship("Article", secondary=article_tag_mapping,
-                               backref="tags",
+                               backref=db.backref("tags", lazy="dynamic"),
                                lazy="dynamic")
 
 
@@ -442,6 +444,10 @@ class Article(UUIDMixin, TimestampMixin, ModelBase):
     comments = db.relationship("Comment",
                                backref=db.backref("article", lazy="subquery"),
                                lazy="dynamic")
+
+    def get_tags(self):
+        """Get article tags order by associate time asc"""
+        return self.tags.order_by(article_tag_mapping.c.created_at.asc()).all()
 
 
 class Comment(UUIDMixin, TimestampMixin, ModelBase):

@@ -2,7 +2,9 @@
   <div>
     <Card>
       <tables ref="table"
-              editable searchable
+              border
+              editable
+              searchable
               search-place="top"
               :loading="loading"
               v-model="tableData"
@@ -15,7 +17,13 @@
       </tables>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
-            <Page :total="dataTotal" :page-size="pageSize" :current="currentPage" @on-change="changePage"></Page>
+            <Page show-sizer
+                  :total="dataTotal"
+                  :page-size-opts="pageSizeOpts"
+                  :page-size="pageSize"
+                  :current="currentPage"
+                  @on-change="changePage"
+                  @on-page-size-change="changePageSize"/>
         </div>
       </div>
     </Card>
@@ -40,22 +48,94 @@ export default {
       dataTotal: 0,
       // 分页显示条数默认为10
       pageSize: 10,
+      pageSizeOpts: [10, 25, 50, 100],
       // 当前所在分页索引
       currentPage: 1,
       // sort related
-      sortColumn: 'updated_at',
+      sortColumn: 'published_at',
       SortDirection: 'desc',
       // filter related
       searchKey: '',
       searchValue: '',
       tableData: [],
       columns: [
-        {title: 'Title', key: 'title', width: 160, editable: true, sortable: true, searchable: true},
-        {title: 'Source', key: 'source', sortable: true},
-        {title: 'Tags', key: 'tags'},
-        {title: 'Author', key: 'user', searchable: true},
-        {title: 'Create-Time', key: 'created_at', sortable: true},
-        {title: 'Update-Time', key: 'updated_at', sortable: true}
+        {title: 'Title', key: 'title', width: 260, editable: true, sortable: true, searchable: true},
+        {
+          title: 'Source',
+          key: 'source',
+          width: 100,
+          sortable: true,
+          render: (h, params) => {
+            const colors = {
+              '原创': 'primary',
+              '转载': 'success',
+              '翻译': 'warning'
+            }
+            let source = params.row.source
+            let color = colors[source] || 'error'
+            return h('Tag', {
+              props: {
+                color: color,
+                fade: true
+              },
+              domProps: {
+                innerHTML: source
+              }
+            })
+          }
+        },
+        {
+          title: 'Category',
+          key: 'category',
+          width: 200,
+          render: (h, params) => {
+            let category = params.row.category.join(' - ')
+            return h('Tag', category)
+          }
+        },
+        {
+          title: 'Tags',
+          key: 'tags',
+          width: 300,
+          render: (h, params) => {
+            let tags = []
+            for (var tag of params.row.tags) tags.push(h('Tag', tag))
+            return h('Row', tags)
+          }
+        },
+        {title: 'Author', key: 'user', width: 100, searchable: true},
+        // {title: 'Create-Time', key: 'created_at', sortable: true},
+        {title: 'Views', key: 'views', width: 100},
+        {title: 'Stars', key: 'stars', width: 100},
+        {
+          title: 'Publish-Time',
+          key: 'published_at',
+          width: 150,
+          sortable: true,
+          sortType: 'desc',
+          render: (h, params) => {
+            return h('Time', {
+              props: {
+                time: params.row.published_at,
+                interval: 60
+              }
+            })
+          }
+        },
+        {
+          title: 'Handle',
+          key: 'handle',
+          button: [
+            (h, params, vm) => {
+              return h('Button', {
+                props: {
+                  type: 'dashed',
+                  icon: 'ios-recording-outline'
+                }
+              }, '查看')
+            }
+          ]
+        }
       ],
       loading: false
     }
@@ -64,6 +144,7 @@ export default {
     getTableData () {
       this.loading = true
       let params = {
+        published: true,
         page: this.currentPage,
         pageSize: this.pageSize,
         sort: this.sortColumn,
@@ -86,6 +167,10 @@ export default {
     },
     changePage (index) {
       this.currentPage = index
+      this.getTableData()
+    },
+    changePageSize (size) {
+      this.pageSize = size
       this.getTableData()
     },
     handleDelete (params) {

@@ -24,7 +24,7 @@ class CreateArticleSchema(Schema):
     """Validate create article input"""
     title = fields.Str(required=True, validate=Length(min=1, max=255))
     summary = fields.Str(validate=Length(max=255))
-    content = fields.Str(required=True)
+    content = fields.Str(required=True, validate=Length(min=1))
     published = fields.Boolean()
     protected = fields.Boolean()
     category_id = fields.Str(required=True, validate=Length(max=64))
@@ -33,11 +33,23 @@ class CreateArticleSchema(Schema):
     tags = fields.List(fields.Dict())
 
 
+class UpdateArticleSchema(Schema):
+    """Validate update article input"""
+    title = fields.Str(validate=Length(min=1, max=255))
+    summary = fields.Str(validate=Length(max=255))
+    content = fields.Str(validate=Length(min=1))
+    published = fields.Boolean()
+    protected = fields.Boolean()
+    category_id = fields.Str(validate=Length(max=64))
+    source_id = fields.Str(validate=Length(max=64))
+    tags = fields.List(fields.Dict())
+
+
 @api.resource("/articles/",
               methods=["POST", "GET"],
               endpoint="articles")
 @api.resource("/articles/<string:article_id>",
-              methods=["GET"],
+              methods=["GET", "PUT"],
               endpoint="article")
 class ArticleResource(restful.Resource):
     """Controller for article resources"""
@@ -45,15 +57,22 @@ class ArticleResource(restful.Resource):
     def __init__(self):
         super().__init__()
         self.post_schema = CreateArticleSchema()
+        self.put_schema = UpdateArticleSchema()
 
     @staticmethod
     def _article_to_dict(article, content=False):
         """Get a dict of article's details"""
         info = article.to_dict(content=content)
         info["user"] = article.user.name
-        info["category"] = article.category.name
+        # article's categories is a list with hierarchies
+        info["category"] = []
+        category = article.category
+        while category:
+            info["category"].insert(0, category.name)
+            category = category.parent
+
         info["source"] = article.source.name
-        info["tags"] = [tag.name for tag in article.tags]
+        info["tags"] = [tag.name for tag in article.get_tags()]
 
         return info
 
@@ -174,6 +193,61 @@ class ArticleResource(restful.Resource):
         if published:
             article.published_at = datetime.datetime.utcnow()
 
+        for _tag in tags:
+            tag_id = _tag.get("id")
+            tag_name = _tag.get("name")
+            tag = None
+            if tag_id:
+                tag = Tag.query.get(tag_id)
+            elif tag_name:
+                tag = Tag(name=tag_name)
+                try:
+                    db.session.add(tag)
+                    db.session.commit()
+                except IntegrityError:
+                    db.session.rollback()
+                    tag = Tag.query.filter_by(name=tag_name).first()
+            if tag:
+                article.tags.append(tag)
+
+        try:
+            db.session.add(article)
+            db.session.commit()
+        except DatabaseError as ex:
+            LOG.exception("An unknown db error occurred")
+            return make_error_response(500, "DB Error", ex.code)
+        else:
+            return {"article": self._article_to_dict(article)}
+
+    @auth.login_required
+    @envelope_json_required("article")
+    def put(self, article_id):
+        """Update the editable attributes of an exitsing article.
+
+        :param article_id:
+        :return:
+        """
+        result = self.put_schema.load(g.article)
+        if result.errors:
+            return make_error_response(400, result.errors)
+
+        article = Article.query.get(article_id)
+        if not article:
+            return make_error_response(404, "Article %r not found" % article_id)
+
+        published = result.data.pop("published", None)
+        if not article.published and published:
+            # NOTE: can only publish once and after that can't be changed
+            article.published = published
+            article.published_at = datetime.datetime.utcnow()
+
+        tags = result.data.pop("tags", [])
+        article.update(**result.data)
+
+        # clear tags first and add
+        if tags:
+            article.tags = []
+            db.session.add(article)
         for _tag in tags:
             tag_id = _tag.get("id")
             tag_name = _tag.get("name")

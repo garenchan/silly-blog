@@ -29,3 +29,14 @@ export const createArticle = ({title, content, sourceId, categoryId, ...extras})
     method: 'post'
   })
 }
+
+export const updateArticle = (id, {...info}) => {
+  const data = {
+    article: info
+  }
+  return axios.request({
+    url: `articles/${id}`,
+    data,
+    method: 'put'
+  })
+}

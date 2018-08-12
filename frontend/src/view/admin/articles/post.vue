@@ -11,7 +11,8 @@
               <Input v-model="form.summary" type="textarea" placeholder="请输入文章摘要"/>
             </FormItem>
             <FormItem label="文章内容" prop="content">
-              <markdown-editor v-model="form.content"/>
+              <markdown-editor v-model="form.content"
+                               :localCache="false"/>
             </FormItem>
           </Col>
           <Col span="6">
@@ -47,15 +48,22 @@
             </FormItem>
             <Divider dashed/>
             <FormItem>
-              <Button class="publish-button">预览</Button>
-              <Button class="publish-button">保存草稿</Button>
+              <Button class="publish-button"
+                      @click="handlePreview">
+                预览
+              </Button>
+              <Button class="publish-button"
+                      :loading="saving"
+                      @click="handleSaveDraft">
+                保存草稿
+              </Button>
               <Button class="publish-button"
                       type="primary"
                       style="width:90px;"
                       icon="ios-checkmark-circle"
                       :loading="publishing"
                       @click="handlePublish">
-                  发表
+                发表
               </Button>
             </FormItem>
           </Col>
@@ -70,7 +78,7 @@ import MarkdownEditor from '_c/markdown'
 import { listSources } from '@/api/source'
 import { listCategories } from '@/api/category'
 import { listTags } from '@/api/tag'
-import { createArticle } from '@/api/article'
+import { createArticle, updateArticle } from '@/api/article'
 
 export default {
   name: 'admin_article_post',
@@ -79,6 +87,7 @@ export default {
   },
   data () {
     return {
+      articleId: '',
       sources: [],
       categories: [],
       tags: [],
@@ -86,6 +95,7 @@ export default {
       tagNotFoundText: '无匹配数据',
       fakeTagPrefix: 'newtag-',
       publishing: false,
+      saving: false,
       form: {
         title: '',
         summary: '',
@@ -198,6 +208,17 @@ export default {
     onTagSelectChange (params) {
       this.tagNotFoundText = (params.length >= 5 ? '所选标签已达到5个' : '无匹配数据')
     },
+    clearForm () {
+      Object.assign(this.form, {
+        title: '',
+        summary: '',
+        content: '',
+        sourceId: '',
+        categoryId: [],
+        tags: [],
+        protected: false
+      })
+    },
     handlePublish () {
       this.$refs.postForm.validate((valid) => {
         if (valid) {
@@ -218,9 +239,13 @@ export default {
           if (tags.length) params['tags'] = tags
           this.publishing = true
           return new Promise((resolve, reject) => {
-            createArticle(params).then(res => {
+            let promise = null
+            if (this.articleId) promise = updateArticle(this.articleId, params)
+            else promise = createArticle(params)
+            return promise.then(res => {
               this.publishing = false
               this.$Message.info('文章发表成功')
+              this.clearForm()
               resolve()
             }).catch(err => {
               this.publishing = false
@@ -231,6 +256,47 @@ export default {
           })
         }
       })
+    },
+    handleSaveDraft () {
+      this.$refs.postForm.validate((valid) => {
+        if (valid) {
+          let params = {
+            title: this.form.title,
+            content: this.form.content,
+            sourceId: this.form.sourceId,
+            categoryId: this.form.categoryId.slice(-1)[0],
+            published: false,
+            summary: this.form.summary,
+            protected: this.form.protected
+          }
+          let tags = []
+          for (var tag of this.form.tags) {
+            if (tag.startsWith(this.fakeTagPrefix)) tags.push({id: null, name: tag.substr(this.fakeTagPrefix.length)})
+            else tags.push({id: tag, name: null})
+          }
+          if (tags.length) params['tags'] = tags
+          this.saving = true
+          return new Promise((resolve, reject) => {
+            let promise = null
+            if (this.articleId) promise = updateArticle(this.articleId, params)
+            else promise = createArticle(params)
+            return promise.then(res => {
+              this.saving = false
+              this.$Message.info('文章已保存为草稿')
+              this.articleId = res.article.id
+              resolve()
+            }).catch(err => {
+              this.saving = false
+              const response = err.response
+              const data = response.data
+              this.$Message.error(data.error.message)
+            })
+          })
+        }
+      })
+    },
+    handlePreview () {
+      this.clearForm()
     }
   },
   mounted () {
