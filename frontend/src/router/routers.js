@@ -1,5 +1,5 @@
 import Main from '@/view/main'
-import store from '@/store'
+// import store from '@/store'
 
 export const testRouter = {
   path: '/',
@@ -42,8 +42,9 @@ export const homeRouter = {
         notCache: true
       },
       component: () => {
-        if (store.state.user.role === 'admin') return import('@/view/admin/home')
-        else if (store.state.user.role === 'user') return import('@/view/user/home')
+        return import('@/view/admin/home')
+        // if (store.state.user.role === 'admin') return import('@/view/admin/home')
+        // else if (store.state.user.role === 'user') return import('@/view/user/home')
       }
     }
   ]
@@ -182,6 +183,28 @@ export const adminRouters = [
         meta: {
           icon: 'logo-pinterest',
           title: '发表文章',
+          roles: ["admin"]
+        },
+        component: () => import('@/view/admin/articles/post')
+      }
+    ]
+  },
+  {
+    path: adminPathPrefix,
+    name: '_admin_articles_edit',
+    meta: {
+      hideInMenu: true,
+      roles: ["admin"]
+    },
+    component: Main,
+    children: [
+      {
+        path: 'article/:article_id',
+        name: 'admin_article_edit',
+        meta: {
+          icon: 'ios-create',
+          title: '编辑文章',
+          // notCache: true,
           roles: ["admin"]
         },
         component: () => import('@/view/admin/articles/post')

@@ -7,6 +7,7 @@ import logging
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
+from sqlalchemy.orm import deferred
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from silly_blog.app import db, auth, jws
@@ -423,10 +424,10 @@ class Source(UUIDMixin, ModelBase):
 class Article(UUIDMixin, TimestampMixin, ModelBase):
     """Article Model"""
     __tablename__ = "articles"
-    excludes = ["category_id", "source_id"]
+    excludes = ["content", "category_id", "source_id"]
 
     title = db.Column(db.String(255), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    content = deferred(db.Column(db.Text, nullable=False))
     summary = db.Column(db.String(255), nullable=True)
     stars = db.Column(db.Integer, default=0)
     views = db.Column(db.Integer, default=0)

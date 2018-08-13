@@ -12,7 +12,11 @@
             </FormItem>
             <FormItem label="文章内容" prop="content">
               <markdown-editor v-model="form.content"
-                               :localCache="false"/>
+                               preview-class="markdown-body"
+                               :localCache="false"
+                               :options="editorOptions"/>
+              <!--<markdown-editor v-model="form.content"
+                               :highlight="true"/>-->
             </FormItem>
           </Col>
           <Col span="6">
@@ -24,7 +28,6 @@
             <FormItem label="文章分类" prop="categoryId">
               <Cascader v-model="form.categoryId"
                         :data="categories"
-                        :load-data="loadSubCategories"
                         :render-format="categoryFormat"
                         filterable
                         placeholder="请选择文章分类"/>
@@ -41,10 +44,12 @@
               </Select>
             </FormItem>
             <FormItem label="私密文章" prop="protected">
-              <i-switch v-model="form.protected" size="large">
+              <i-switch v-model="form.protected"
+                        size="large">
                 <span slot="open">私密</span>
                 <span slot="close">公开</span>
               </i-switch>
+              &nbsp;<span style="color: #b3b3b3;">{{ protectedCaption }}</span>
             </FormItem>
             <Divider dashed/>
             <FormItem>
@@ -52,7 +57,8 @@
                       @click="handlePreview">
                 预览
               </Button>
-              <Button class="publish-button"
+              <Button v-if="!isEdit"
+                      class="publish-button"
                       :loading="saving"
                       @click="handleSaveDraft">
                 保存草稿
@@ -63,7 +69,7 @@
                       icon="ios-checkmark-circle"
                       :loading="publishing"
                       @click="handlePublish">
-                发表
+                 {{ isEdit ? '保存': '发表'}}
               </Button>
             </FormItem>
           </Col>
@@ -78,8 +84,10 @@ import MarkdownEditor from '_c/markdown'
 import { listSources } from '@/api/source'
 import { listCategories } from '@/api/category'
 import { listTags } from '@/api/tag'
-import { createArticle, updateArticle } from '@/api/article'
+import { createArticle, updateArticle, getArticle } from '@/api/article'
+import hljs from 'highlight.js'
 
+window.hljs = hljs
 export default {
   name: 'admin_article_post',
   components: {
@@ -87,7 +95,7 @@ export default {
   },
   data () {
     return {
-      articleId: '',
+      articleId: this.$route.params.article_id || '',
       sources: [],
       categories: [],
       tags: [],
@@ -96,6 +104,46 @@ export default {
       fakeTagPrefix: 'newtag-',
       publishing: false,
       saving: false,
+      // Markdown编辑器配置项
+      editorOptions: {
+        autoDownloadFontAwesome: false,
+        placeholder: '使用Markdown开始编写你的文章...',
+        renderingConfig: {
+          codeSyntaxHighlighting: true
+        },
+        spellChecker: false,
+        toolbar: [
+          'bold',
+          'italic',
+          'strikethrough',
+          '|',
+          'heading',
+          'heading-smaller',
+          'heading-bigger',
+          'heading-1',
+          'heading-2',
+          'heading-3',
+          '|',
+          'code',
+          'quote',
+          'unordered-list',
+          'ordered-list',
+          'clean-block',
+          '|',
+          'link',
+          'image',
+          'table',
+          'horizontal-rule',
+          '|',
+          'preview',
+          'side-by-side',
+          'fullscreen',
+          '|',
+          'guide'
+        ],
+        indentWithTabs: false,
+        tabSize: 4
+      },
       form: {
         title: '',
         summary: '',
@@ -125,6 +173,14 @@ export default {
       }
     }
   },
+  computed: {
+    isEdit () {
+      return Boolean(this.$route.params.article_id)
+    },
+    protectedCaption: function () {
+      return this.form.protected ? '仅自己可见' : '所有人可见'
+    }
+  },
   methods: {
     getSources () {
       return new Promise((resolve, reject) => {
@@ -144,7 +200,11 @@ export default {
       }
       return new Promise((resolve, reject) => {
         listCategories(params).then(res => {
-          for (var item of res.categories) this.categories.push({value: item.id, label: item.name, children: [], loading: false})
+          for (var item of res.categories) {
+            let subs = []
+            for (var sub of item.subs) subs.push({ value: sub.id, label: sub.name })
+            if (subs.length) this.categories.push({ value: item.id, label: item.name, children: subs })
+          }
           resolve()
         }).catch(err => {
           const response = err.response
@@ -153,24 +213,28 @@ export default {
         })
       })
     },
-    loadSubCategories (item, callback) {
-      item.loading = true
-      let params = {
-        parent_id: item.value
-      }
-      return new Promise((resolve, reject) => {
-        listCategories(params).then(res => {
-          item.loading = false
-          for (var it of res.categories) item.children.push({value: it.id, label: it.name})
-          callback()
-          resolve()
-        }).catch(err => {
-          item.loading = false
-          const response = err.response
-          const data = response.data
-          this.$Message.error(data.error.message)
+    /*
+     * If current operation is editing, get the article detail !
+     */
+    getCurrentArticle () {
+      let id = this.$route.params.article_id
+      if (id) {
+        return new Promise((resolve, reject) => {
+          getArticle(id).then(res => {
+            this.form.title = res.article.title
+            this.form.summary = res.article.summary
+            this.form.content = res.article.content
+            this.form.sourceId = res.article.source.id
+            for (var category of res.article.category) this.form.categoryId.push(category.id)
+            for (var tag of res.article.tags) this.form.tags.push(tag.id)
+            resolve()
+          }).catch(err => {
+            const response = err.response
+            const data = response.data
+            this.$Message.error(data.error.message)
+          })
         })
-      })
+      }
     },
     categoryFormat (labels, selectedData) {
       if (labels.length) return labels[0] + ' - ' + labels[1]
@@ -190,10 +254,10 @@ export default {
             let allMatch = false
             for (var item of res.tags) {
               if (item.name === query) allMatch = true
-              tags.push({id: item.id, name: item.name})
+              tags.push({ id: item.id, name: item.name })
             }
             // NOTE: if perfectly  match tag not exist, create a fake tag here
-            if (!allMatch) tags.push({id: this.fakeTagPrefix + query, name: query})
+            if (!allMatch) tags.push({ id: this.fakeTagPrefix + query, name: query })
             this.tags = tags
             resolve()
           }).catch(err => {
@@ -219,7 +283,7 @@ export default {
         protected: false
       })
     },
-    handlePublish () {
+    handleSubmit (isPublish) {
       this.$refs.postForm.validate((valid) => {
         if (valid) {
           let params = {
@@ -227,28 +291,38 @@ export default {
             content: this.form.content,
             sourceId: this.form.sourceId,
             categoryId: this.form.categoryId.slice(-1)[0],
-            published: true,
+            published: Boolean(isPublish),
             summary: this.form.summary,
             protected: this.form.protected
           }
           let tags = []
           for (var tag of this.form.tags) {
-            if (tag.startsWith(this.fakeTagPrefix)) tags.push({id: null, name: tag.substr(this.fakeTagPrefix.length)})
+            if (tag.startsWith(this.fakeTagPrefix)) tags.push({ id: null, name: tag.substr(this.fakeTagPrefix.length) })
             else tags.push({id: tag, name: null})
           }
           if (tags.length) params['tags'] = tags
-          this.publishing = true
+          if (isPublish) this.publishing = true
+          else this.saving = true
           return new Promise((resolve, reject) => {
             let promise = null
             if (this.articleId) promise = updateArticle(this.articleId, params)
             else promise = createArticle(params)
             return promise.then(res => {
-              this.publishing = false
-              this.$Message.info('文章发表成功')
-              this.clearForm()
+              let message = null
+              if (isPublish) {
+                this.publishing = false
+                if (isEdit) message = '文章保存成功'
+                else message = '文章发表成功'
+              } else {
+                this.saving = false
+                message = '文章已保存为草稿'
+              }
+              this.$Message.info(message)
+              if (isPublish) this.clearForm()
               resolve()
             }).catch(err => {
-              this.publishing = false
+              if (isPublish) this.publishing = false
+              else this.saving = false
               const response = err.response
               const data = response.data
               this.$Message.error(data.error.message)
@@ -256,59 +330,38 @@ export default {
           })
         }
       })
+    },
+    handlePublish () {
+      this.handleSubmit(true)
     },
     handleSaveDraft () {
-      this.$refs.postForm.validate((valid) => {
-        if (valid) {
-          let params = {
-            title: this.form.title,
-            content: this.form.content,
-            sourceId: this.form.sourceId,
-            categoryId: this.form.categoryId.slice(-1)[0],
-            published: false,
-            summary: this.form.summary,
-            protected: this.form.protected
-          }
-          let tags = []
-          for (var tag of this.form.tags) {
-            if (tag.startsWith(this.fakeTagPrefix)) tags.push({id: null, name: tag.substr(this.fakeTagPrefix.length)})
-            else tags.push({id: tag, name: null})
-          }
-          if (tags.length) params['tags'] = tags
-          this.saving = true
-          return new Promise((resolve, reject) => {
-            let promise = null
-            if (this.articleId) promise = updateArticle(this.articleId, params)
-            else promise = createArticle(params)
-            return promise.then(res => {
-              this.saving = false
-              this.$Message.info('文章已保存为草稿')
-              this.articleId = res.article.id
-              resolve()
-            }).catch(err => {
-              this.saving = false
-              const response = err.response
-              const data = response.data
-              this.$Message.error(data.error.message)
-            })
-          })
-        }
-      })
+      this.handleSubmit(false)
     },
     handlePreview () {
+      // NOTE: The form's resetFields method can't clear itself completely
+      // this.$refs.postForm.resetFields()
       this.clearForm()
     }
   },
   mounted () {
     this.getSources()
     this.getCategories()
+    if (this.isEdit) this.getCurrentArticle()
   }
 }
 </script>
 
 <style lang="less">
+@import '~font-awesome/css/font-awesome.css';
+@import '~github-markdown-css/github-markdown.css';
+@import '~highlight.js/styles/atom-one-dark.css';
 .publish-button{
     float: right;
     margin-left: 10px;
+}
+.markdown-wrapper{
+  .CodeMirror, .CodeMirror-scroll {
+    min-height: 450px;
+  }
 }
 </style>

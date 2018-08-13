@@ -63,13 +63,19 @@ class CategoryResource(restful.Resource):
         self.post_schema = CreateCategorySchema()
         self.put_schema = UpdateCategorySchema()
 
-    @staticmethod
-    def _get_by_id(category_id):
+    def _to_dict(self, category):
+        """Get a dict of category's details"""
+        info = category.to_dict()
+        subs = category.children.all()
+        info["subs"] = [self._to_dict(sub) for sub in subs]
+        return info
+
+    def _get_by_id(self, category_id):
         category = Category.query.get(category_id)
         if not category:
             return make_error_response(404, "Category %r not found" % category_id)
 
-        return {"category": category.to_dict()}
+        return {"category": self._to_dict(category)}
 
     def get(self, category_id=None):
         """List categories or show details of a specified one."""
@@ -141,7 +147,7 @@ class CategoryResource(restful.Resource):
 
         categories = query.all()
         return {
-            "categories": [category.to_dict() for category in categories],
+            "categories": [self._to_dict(category) for category in categories],
             "total": total,
         }
 

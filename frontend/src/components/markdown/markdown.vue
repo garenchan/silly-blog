@@ -8,7 +8,7 @@
 import Simplemde from 'simplemde'
 import 'simplemde/dist/simplemde.min.css'
 export default {
-  naem: 'MarkdownEditor',
+  name: 'MarkdownEditor',
   props: {
     value: {
       type: String,
@@ -23,6 +23,10 @@ export default {
     localCache: {
       type: Boolean,
       default: true
+    },
+    previewClass: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -44,19 +48,36 @@ export default {
       this.editor.codemirror.on('blur', () => {
         this.$emit('on-blur', this.editor.value())
       })
+    },
+    addPreviewClass (className) {
+      const wrapper = this.editor.codemirror.getWrapperElement()
+      const preview = document.createElement('div')
+      wrapper.nextSibling.className += ` ${className}`
+      preview.className = `editor-preview ${className}`
+      wrapper.appendChild(preview)
     }
   },
   mounted () {
     this.editor = new Simplemde(Object.assign(this.options, {
-      element: this.$refs.editor
+      element: this.$refs.editor,
+      initialValue: this.value
     }))
+    // 添加自定义 previewClass
+    const className = this.previewClass || ''
+    this.addPreviewClass(className)
     /**
      * 事件列表为Codemirror编辑器的事件，更多事件类型，请参考：
      * https://codemirror.net/doc/manual.html#events
      */
     this.addEvents()
     let content = localStorage.markdownContent
-    if (content) this.editor.value(content)
+    if (content && this.localCache) this.editor.value(content)
+  },
+  watch: {
+    value (val) {
+      if (val === this.editor.value()) return
+      this.editor.value(val)
+    }
   }
 }
 </script>

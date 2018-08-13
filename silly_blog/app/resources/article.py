@@ -12,7 +12,7 @@ from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length
 
 from silly_blog.app import api, db, auth
-from silly_blog.app.models import Article, Tag
+from silly_blog.app.models import Article, Tag, User, LocalUser
 from silly_blog.contrib.utils import (envelope_json_required, str2bool,
                                       make_error_response, parse_isotime)
 
@@ -49,7 +49,7 @@ class UpdateArticleSchema(Schema):
               methods=["POST", "GET"],
               endpoint="articles")
 @api.resource("/articles/<string:article_id>",
-              methods=["GET", "PUT"],
+              methods=["GET", "PUT", "DELETE"],
               endpoint="article")
 class ArticleResource(restful.Resource):
     """Controller for article resources"""
@@ -68,11 +68,18 @@ class ArticleResource(restful.Resource):
         info["category"] = []
         category = article.category
         while category:
-            info["category"].insert(0, category.name)
+            info["category"].insert(0, {
+                "id": category.id,
+                "name": category.name
+            })
             category = category.parent
 
-        info["source"] = article.source.name
-        info["tags"] = [tag.name for tag in article.get_tags()]
+        info["source"] = {
+            "id": article.source.id,
+            "name": article.source.name,
+        }
+        info["tags"] = [{"id": tag.id, "name": tag.name}
+                        for tag in article.get_tags()]
 
         return info
 
@@ -87,12 +94,24 @@ class ArticleResource(restful.Resource):
         if article_id:
             return self._get_by_id(article_id)
 
-        query = Article.query
-        # filter by `published` field, `None` means nothing to do.
+        query = db.session.query(Article, LocalUser).outerjoin(LocalUser, LocalUser.user_id==Article.user_id)
+        # query = Article.query.outerjoin(LocalUser, LocalUser.user_id==Article.user_id)
+        # Article.query.join(Article.user).outerjoin(LocalUser, Article.user.id==LocalUser.user_id)
+        # filter by 'published' field, 'None' means nothing to do.
         published = request.args.get("published")
         if published is not None:
             published = str2bool(published)
-            query = query.filter_by(published=published)
+            query = query.filter(Article.published==published)
+        # filter by 'title' field
+        title = request.args.get("title", "").strip()
+        if title:
+            exp = Article.title.like(''.join(['%', title, '%']))
+            query = query.filter(exp)
+        # filter by `user` field
+        user = request.args.get("user", "").strip()
+        if user:
+            exp = LocalUser.name.like(''.join(['%', user, '%']))
+            query = query.filter(exp)
         # filter by `user_id`
         user_id = request.args.get("user_id")
         if user_id is not None:
@@ -154,11 +173,12 @@ class ArticleResource(restful.Resource):
             query = query.offset(offset).limit(pagesize)
 
         articles = query.all()
+        print(articles)
         # with content or not
         content = request.args.get("content", False)
         return {
             "articles": [self._article_to_dict(article, content=content)
-                         for article in articles],
+                         for article, _ in articles],
             "total": total,
         }
 
@@ -273,3 +293,21 @@ class ArticleResource(restful.Resource):
             return make_error_response(500, "DB Error", ex.code)
         else:
             return {"article": self._article_to_dict(article)}
+
+    @auth.login_required
+    def delete(self, article_id):
+        """Delete a exitsing article.
+
+        :param article_id: an exitsing article id.
+        """
+        article = Article.query.get(article_id)
+        if not article:
+            return make_error_response(404, "Article %r not found" % article_id)
+
+        try:
+            article.delete()
+        except DatabaseError as ex:
+            LOG.exception("An unknown db error occurred")
+            return make_error_response(500, "DB Error", ex.code)
+        else:
+            return None, 204

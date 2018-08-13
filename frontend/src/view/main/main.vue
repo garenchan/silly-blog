@@ -1,7 +1,7 @@
 <template>
   <Layout style="height: 100%" class="main">
     <Sider hide-trigger collapsible :width="256" :collapsed-width="64" v-model="collapsed" class="left-sider" :style="{overflow: 'hidden'}">
-      <side-menu  :active-name="$route.name" :collapsed="collapsed" @on-select="turnToPage" :menu-list="menuList">
+      <side-menu accordion ref="sideMenu" :active-name="$route.name" :collapsed="collapsed" @on-select="turnToPage" :menu-list="menuList">
         <!-- 需要放在菜单上面的内容，如Logo，写在side-menu标签内部，如下 -->
         <div class="logo-con">
           <img v-show="!collapsed" :src="maxLogo" key="max-logo" />
@@ -22,10 +22,11 @@
           <div class="tag-nav-wrapper">
             <tags-nav :value="$route" @input="handleClick" :list="tagNavList" @on-close="handleCloseTag"/>
           </div>
-          <Content class="content-wrapper">
+          <Content id="content" class="content-wrapper">
             <keep-alive :include="cacheList">
-              <router-view/>
+              <router-view :key="$route.path"/>
             </keep-alive>
+            <BackTop parentId="content" :height="300"/>
             <!--<keep-alive>
               <router-view v-if="!($route.meta && $route.meta.notCache)"></router-view>
             </keep-alive>
@@ -37,6 +38,7 @@
   </Layout>
 </template>
 <script>
+import BackTop from '_c/back-top'
 import SideMenu from './components/side-menu'
 import HeaderBar from './components/header-bar'
 import TagsNav from './components/tags-nav'
@@ -51,6 +53,7 @@ import './main.less'
 export default {
   name: 'Main',
   components: {
+    BackTop,
     SideMenu,
     HeaderBar,
     Language,
@@ -111,8 +114,15 @@ export default {
     handleCloseTag (res, type, name) {
       const nextName = getNextName(this.tagNavList, name)
       this.setTagNavList(res)
-      if (type === 'all') this.turnToPage('home')
-      else if (this.$route.name === name) this.$router.push({ name: nextName })
+      let openName = ''
+      if (type === 'all') {
+        this.turnToPage('home')
+        openName = 'home'
+      } else if (this.$route.name === name) {
+        this.$router.push({ name: nextName })
+        openName = nextName
+      }
+      this.$refs.sideMenu.updateOpenName(openName)
     },
     handleClick (item) {
       let name = item.name

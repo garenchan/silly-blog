@@ -14,6 +14,13 @@ export const listArticles = ({since, sort, direction, page, pageSize, ...filters
   })
 }
 
+export const getArticle = (id) => {
+  return axios.request({
+    url: `articles/${id}`,
+    method: 'get'
+  })
+}
+
 export const createArticle = ({title, content, sourceId, categoryId, ...extras}) => {
   let data = {
     article: Object.assign({
@@ -38,5 +45,12 @@ export const updateArticle = (id, {...info}) => {
     url: `articles/${id}`,
     data,
     method: 'put'
+  })
+}
+
+export const deleteArticle = (id) => {
+  return axios.request({
+    url: `articles/${id}`,
+    method: 'delete'
   })
 }

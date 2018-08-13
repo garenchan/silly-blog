@@ -12,7 +12,8 @@
               @on-sort-change="handleSortChange"
               @on-save-edit="handleEdit"
               :custom-search="true"
-              @on-search="handleSearch">
+              @on-search="handleSearch"
+              @on-delete="handleDelete">
         <AddArticle slot="toolbox"/>
       </tables>
       <div style="margin: 10px;overflow: hidden">
@@ -33,7 +34,7 @@
 <script>
 import Tables from '_c/tables'
 import AddArticle from './add.vue'
-import { listArticles } from '@/api/article'
+import { listArticles, deleteArticle } from '@/api/article'
 import { EventBus } from '@/libs/bus'
 
 export default {
@@ -71,17 +72,14 @@ export default {
               '转载': 'success',
               '翻译': 'warning'
             }
-            let source = params.row.source
+            let source = params.row.source.name
             let color = colors[source] || 'error'
             return h('Tag', {
               props: {
                 color: color,
                 fade: true
-              },
-              domProps: {
-                innerHTML: source
               }
-            })
+            }, source)
           }
         },
         {
@@ -89,8 +87,9 @@ export default {
           key: 'category',
           width: 200,
           render: (h, params) => {
-            let category = params.row.category.join(' - ')
-            return h('Tag', category)
+            let category = []
+            for (var item of params.row.category) category.push(item.name)
+            return h('Tag', category.join(' - '))
           }
         },
         {
@@ -99,7 +98,7 @@ export default {
           width: 300,
           render: (h, params) => {
             let tags = []
-            for (var tag of params.row.tags) tags.push(h('Tag', tag))
+            for (var tag of params.row.tags) tags.push(h('Tag', tag.name))
             return h('Row', tags)
           }
         },
@@ -131,8 +130,41 @@ export default {
                 props: {
                   type: 'dashed',
                   icon: 'ios-recording-outline'
+                },
+                style: {
+                  marginRight: '5px'
+                },
+                on: {
+                  click: () => {
+                    let args = { article_id: params.row.id }
+                    this.$router.push({
+                      name: 'admin_article_edit',
+                      params: args
+                    })
+                  }
                 }
-              }, '查看')
+              }, '编辑')
+            },
+            (h, params, vm) => {
+              let title = params.row.title
+              return h('Poptip', {
+                props: {
+                  confirm: true,
+                  title: `你确定要删除文章"${title}"吗?`
+                },
+                on: {
+                  'on-ok': () => {
+                    vm.$emit('on-delete', params)
+                  }
+                }
+              }, [
+                h('Button', {
+                  props: {
+                    type: 'dashed',
+                    icon: 'md-trash'
+                  }
+                }, '删除')
+              ])
             }
           ]
         }
@@ -150,7 +182,7 @@ export default {
         sort: this.sortColumn,
         direction: this.SortDirection
       }
-      if (this.searchKey) params[this.searchKey] = this.searchValue
+      if (this.searchKey) params[this.searchKey] = this.searchValue.trim()
       return new Promise((resolve, reject) => {
         listArticles(params).then(res => {
           this.tableData = res.articles
@@ -173,9 +205,6 @@ export default {
       this.pageSize = size
       this.getTableData()
     },
-    handleDelete (params) {
-      console.log(params)
-    },
     handleSortChange ({column, key, order}) {
       this.sortColumn = key
       this.SortDirection = order
@@ -188,6 +217,29 @@ export default {
     },
     handleEdit (params) {
       console.log(params)
+    },
+    handleDelete (params) {
+      let id = params.row.id
+      let title = params.row.title
+      this.loading = true
+      return new Promise((resolve, reject) => {
+        deleteArticle(id).then(res => {
+          this.loading = false
+          this.$Message.info(`文章${title}删除成功`)
+          this.getTableData()
+          resolve()
+        }).catch(err => {
+          this.loading = false
+          const response = err.response
+          const data = response.data
+          if ([404].includes(response.status)) {
+            this.$Message.info(`文章${title}删除成功`)
+            this.getTableData()
+          } else {
+            this.$Message.error(data.error.message)
+          }
+        })
+      })
     }
   },
   mounted () {
