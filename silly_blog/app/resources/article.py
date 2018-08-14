@@ -95,8 +95,6 @@ class ArticleResource(restful.Resource):
             return self._get_by_id(article_id)
 
         query = db.session.query(Article, LocalUser).outerjoin(LocalUser, LocalUser.user_id==Article.user_id)
-        # query = Article.query.outerjoin(LocalUser, LocalUser.user_id==Article.user_id)
-        # Article.query.join(Article.user).outerjoin(LocalUser, Article.user.id==LocalUser.user_id)
         # filter by 'published' field, 'None' means nothing to do.
         published = request.args.get("published")
         if published is not None:
@@ -133,7 +131,7 @@ class ArticleResource(restful.Resource):
             except ValueError as ex:
                 return make_error_response(400, str(ex))
             else:
-                query = query.filter(Article.updated_at >= since)
+                query = query.filter(Article.created_at >= since)
 
         # order by related
         sort = request.args.get("sort", "published_at")
@@ -146,7 +144,7 @@ class ArticleResource(restful.Resource):
             sort_exp = sort_method()
             if not isinstance(sort_exp, UnaryExpression):
                 raise TypeError("Not a unary expression!")
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, NotImplementedError):
             return make_error_response(400, "Unknown direction %r" % direction)
         else:
             query = query.order_by(sort_exp)

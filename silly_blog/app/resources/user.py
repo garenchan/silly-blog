@@ -100,7 +100,7 @@ class UserResource(restful.Resource):
             except ValueError as ex:
                 return make_error_response(400, str(ex))
             else:
-                query = query.filter(LocalUser.updated_at >= since)
+                query = query.filter(LocalUser.created_at >= since)
 
         # order by related
         sort = request.args.get("sort", "updated_at")

@@ -387,7 +387,7 @@ article_tag_mapping = db.Table(
     db.Column("tag_id", db.String(64),
               db.ForeignKey("tags.id", ondelete="CASCADE")),
     db.Column("created_at", db.TIMESTAMP, default=datetime.datetime.utcnow),
-    db.PrimaryKeyConstraint("article_id", "tag_id"),
+    db.UniqueConstraint("article_id", "tag_id", name="article_tag_unique"),
 )
 
 
