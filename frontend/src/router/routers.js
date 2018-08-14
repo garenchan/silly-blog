@@ -204,13 +204,13 @@ export const adminRouters = [
         meta: {
           icon: 'ios-create',
           title: '编辑文章',
-          // notCache: true,
+          notCache: true,
           roles: ["admin"]
         },
-        component: () => import('@/view/admin/articles/post')
+        component: () => import('@/view/admin/articles/edit')
       }
     ]
-  }
+  } // 其实文章编辑和发表可以使用同一个组件，但因为缓存清理问题，只能复制同一个组件2份
 ]
 
 export const errorRouters = [

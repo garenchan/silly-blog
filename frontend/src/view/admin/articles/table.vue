@@ -14,7 +14,18 @@
               :custom-search="true"
               @on-search="handleSearch"
               @on-delete="handleDelete">
-        <AddArticle slot="toolbox"/>
+      <span slot="toolbox" style="margin-left: 2px;">
+        <Select v-model="showWhat" style="width: 150px;">
+          <Option value="all" key="all">显示所有</Option>
+          <Option value="published" key="published">只显示已发表</Option>
+          <Option value="draft" key="draft">只显示草稿</Option>
+        </Select>
+        <Select v-model="showSelfOrAll" style="width: 150px; margin-left: 2px;">
+          <Option value="all" key="all">看所有人</Option>
+          <Option value="self" key="published">只看自己</Option>
+        </Select>
+        <AddArticle/>
+      </span>
       </tables>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
@@ -59,8 +70,22 @@ export default {
       searchKey: '',
       searchValue: '',
       tableData: [],
+      //
+      showWhat: 'published',
+      showSelfOrAll: 'self',
       columns: [
-        {title: 'Title', key: 'title', width: 260, editable: true, sortable: true, searchable: true},
+        {
+          title: 'Title',
+          key: 'title',
+          width: 250,
+          editable: false,
+          sortable: true,
+          searchable: true,
+          render: (h, params) => {
+            let slot = (params.row.published ? '' : '[草稿]') + params.row.title
+            return h('span', slot)
+          }
+        },
         {
           title: 'Source',
           key: 'source',
@@ -95,7 +120,7 @@ export default {
         {
           title: 'Tags',
           key: 'tags',
-          width: 300,
+          width: 250,
           render: (h, params) => {
             let tags = []
             for (var tag of params.row.tags) tags.push(h('Tag', tag.name))
@@ -113,9 +138,25 @@ export default {
           sortable: true,
           sortType: 'desc',
           render: (h, params) => {
+            if (params.row.published_at) {
+              return h('Time', {
+                props: {
+                  time: params.row.published_at,
+                  interval: 60
+                }
+              })
+            } else return h('span', '-')
+          }
+        },
+        {
+          title: 'Create-Time',
+          key: 'created_at',
+          width: 150,
+          sortable: true,
+          render: (h, params) => {
             return h('Time', {
               props: {
-                time: params.row.published_at,
+                time: params.row.created_at,
                 interval: 60
               }
             })
@@ -128,11 +169,11 @@ export default {
             (h, params, vm) => {
               return h('Button', {
                 props: {
-                  type: 'dashed',
-                  icon: 'ios-recording-outline'
+                  // type: 'dashed',
+                  icon: 'logo-markdown'
                 },
                 style: {
-                  marginRight: '5px'
+                  marginRight: '2px'
                 },
                 on: {
                   click: () => {
@@ -160,7 +201,7 @@ export default {
               }, [
                 h('Button', {
                   props: {
-                    type: 'dashed',
+                    // type: 'dashed',
                     icon: 'md-trash'
                   }
                 }, '删除')
@@ -176,12 +217,14 @@ export default {
     getTableData () {
       this.loading = true
       let params = {
-        published: true,
         page: this.currentPage,
         pageSize: this.pageSize,
         sort: this.sortColumn,
         direction: this.SortDirection
       }
+      if (this.showWhat === 'published') params['published'] = true
+      else if (this.showWhat === 'draft') params['published'] = false
+      if (this.showSelfOrAll === 'self') params['user_id'] = this.$store.state.user.id
       if (this.searchKey) params[this.searchKey] = this.searchValue.trim()
       return new Promise((resolve, reject) => {
         listArticles(params).then(res => {
@@ -247,6 +290,11 @@ export default {
       this.getTableData()
     })
     this.getTableData()
+  },
+  watch: {
+    showWhat (val) {
+      this.getTableData()
+    }
   }
 }
 </script>

@@ -22,9 +22,9 @@
           <div class="tag-nav-wrapper">
             <tags-nav :value="$route" @input="handleClick" :list="tagNavList" @on-close="handleCloseTag"/>
           </div>
-          <Content id="content" class="content-wrapper">
+          <Content id="content" class="content-wrapper nui-scroll">
             <keep-alive :include="cacheList">
-              <router-view :key="$route.path"/>
+              <router-view/> <!--:key="$route.path"-->
             </keep-alive>
             <BackTop parentId="content" :height="300"/>
             <!--<keep-alive>
@@ -47,8 +47,8 @@ import Fullscreen from './components/fullscreen'
 import Language from './components/language'
 import { mapMutations, mapActions } from 'vuex'
 import { getNewTagList, getNextName } from '@/libs/util'
-import minLogo from '@/assets/images/logo-min.jpg'
-import maxLogo from '@/assets/images/logo.jpg'
+import minLogo from '@/assets/images/logo-min.png'
+import maxLogo from '@/assets/images/logo.png'
 import './main.less'
 export default {
   name: 'Main',
@@ -150,3 +150,41 @@ export default {
   }
 }
 </script>
+
+<style lang="less">
+.nui-scroll{
+  // overflow: auto;
+}
+.nui-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+/*正常情况下滑块的样式*/
+.nui-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.05);
+  border-radius: 10px;
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*鼠标悬浮在该类指向的控件上时滑块的样式*/
+.nui-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.2);
+  border-radius: 10px;
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*鼠标悬浮在滑块上时滑块的样式*/
+.nui-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,.4);
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*正常时候的主干部分*/
+.nui-scroll::-webkit-scrollbar-track {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0);
+  background-color: white;
+}
+/*鼠标悬浮在滚动条上的主干部分*/
+.nui-scroll::-webkit-scrollbar-track:hover {
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.4);
+  background-color: rgba(0,0,0,.01);
+}
+</style>

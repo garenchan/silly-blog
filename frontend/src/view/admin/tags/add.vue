@@ -42,7 +42,8 @@ export default {
       this.$refs.createForm.validate((valid) => {
         if (valid) {
           return new Promise((resolve, reject) => {
-            createTag(this.form.name).then(res => {
+            let name = this.form.name
+            createTag(name).then(res => {
               this.$Message.info('标签创建成功')
               this.modalVisible = false
               EventBus.$emit('tagCreated')
@@ -55,7 +56,7 @@ export default {
               const response = err.response
               const data = response.data
               if (response.status === 409) {
-                this.$Message.error('标签已存在')
+                this.$Message.error(`标签"${name}"已存在`)
               } else {
                 this.$Message.error(data.error.message)
               }
