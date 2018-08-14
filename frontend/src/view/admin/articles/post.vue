@@ -89,7 +89,7 @@ import hljs from 'highlight.js'
 
 window.hljs = hljs
 export default {
-  name: 'admin_article_edit',
+  name: 'admin_article_post',
   components: {
     MarkdownEditor
   },
