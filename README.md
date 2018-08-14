@@ -11,11 +11,11 @@
 
 ### 用户管理
 
-![user-management](https://raw.githubusercontent.com/garenchan/silly-blog/master/docs/snapshots/%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86.png)
+![user-management](https://raw.githubusercontent.com/garenchan/silly-blog/master/docs/snapshots/user-management.gif)
 
 ### 标签管理
 
-![tag-management](https://raw.githubusercontent.com/garenchan/silly-blog/master/docs/snapshots/%E6%A0%87%E7%AD%BE%E7%AE%A1%E7%90%86.png)
+![tag-management](https://raw.githubusercontent.com/garenchan/silly-blog/master/docs/snapshots/tag-management.gif)
 
 ## 后续计划
 
