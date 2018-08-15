@@ -1,0 +1,265 @@
+.wrapper{
+  background: #eee;
+  padding: 1px;
+
+  &-header{
+    position: fixed;
+    width: 100%;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    //box-shadow: 0 1px 1px rgba(0,0,0,.08);
+    .ivu-menu{
+      &-horizontal{
+        height: 65px;
+        line-height: 65px;
+        &:after{
+          display: none !important;
+        }
+      }
+    }
+    &-nav{
+      width: 95%;
+      height: 65px;
+      margin: 0 auto;
+      &-list{
+        height: inherit;
+        float: right;
+        &:after{
+          content: '';
+          display: block;
+          clear: both;
+        }
+      }
+      &-logo{
+        height: 50px;
+        margin-top: 8px;
+        float: left;
+        img{
+          height: 100%;
+        }
+      }
+      &-search{
+        float: left;
+        margin-left: 60px;
+
+        .ivu-select{
+          width: 165px;
+          font-size: 14px;
+
+          &-selection{
+            border: 0;
+          }
+          &-visible .ivu-select-selection{
+            box-shadow: none;
+          }
+          &-arrow{
+            display: none !important;
+          }
+          &-input{
+            font-size: 14px;
+          }
+        }
+      }
+    }
+  }
+  &-container{
+    background: #fff;
+    min-height: 700px;
+    //width: 90%;
+    margin: 80px auto 15px;
+    //border-radius: 6px;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
+  }
+
+  &-content {
+    padding: 20px 25px;
+    position: relative;
+    h1, h2, h3, h4, h5, h6 {
+      display: inline-block;
+    }
+    h1, h2, blockquote {
+      margin: 12px 0;
+    }
+    h3 {
+      margin: 8px 0;
+    }
+    &:after{
+      content: '';
+      display: block;
+      width: 1px;
+      background: #d7dde4;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -1px;
+    }
+  }
+
+  &-aside{
+    display: block;
+    width: calc(100% - 2px);
+    border: 1px solid #e8eaec;
+    border-radius: 3px;
+    //padding: 2px 2px 0;
+    margin: 10px 0;
+    cursor: pointer;
+
+    &-no-padding{
+      padding: 0;
+      border: 1px solid transparent;
+    }
+
+    img{
+      width: 100%;
+      border-radius: 3px;
+      opacity: 0.8;
+      transition: opacity .2s ease-in-out;
+      &:hover{
+        opacity: 1;
+      }
+    }
+  }
+}
+.footer{
+  background: #fff;
+  color: #666;
+  &-main{
+    width: 90%;
+    margin: 0 auto;
+    .ivu-row{
+      padding: 20px 0;
+      h4 {
+        margin-bottom: 8px;
+        i{
+          font-size: 16px;
+          color: #9ea7b4;
+          position: relative;
+          top: 1px;
+          margin-right: 2px;
+        }
+      }
+      li{
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+        padding-left: 8px;
+      }
+    }
+    ul{
+      list-style: none;
+    }
+  }
+  &-aside{
+    text-align: center;
+  }
+  &-logo{
+    text-align: center;
+    height: 45px;
+    img{
+      height: 100%;
+    }
+  }
+  &-author{
+    position: relative;
+    top: 10px;
+    img{
+      width: 80px;
+    }
+  }
+  &-version{
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 0 4px;
+    color: #c5c8ce;
+    padding-left: 6px;
+  }
+}
+.catalogue{
+  z-index: 2;
+  //position: fixed;
+  //top: 110px;
+  //right: 0;
+  cursor: pointer;
+
+  .ivu-card{
+    //border-radius: 4px 0 0 4px;
+    border-radius: 0;
+  }
+
+  .ivu-card-body{
+    //padding: 8px 10px;
+    padding: 0;
+  }
+  .ivu-anchor-ink:before{
+    width: 1px;
+  }
+  .ivu-anchor-ink-ball{
+    border-width: 1px;
+    border-radius: 50%;
+  }
+  .ivu-card-bordered{
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    border-left: none;
+  }
+
+  a{
+    color: #515a6e;
+    font-size: 12px !important;
+  }
+
+  &-title{
+    //width: 14px;
+    width: auto;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  &-content{
+    //display: none;
+    ul{
+      list-style: none;
+    }
+  }
+
+  &:hover {
+    .catalogue-title{
+      //width: auto;
+    }
+    .catalogue-content{
+      //display: block;
+    }
+  }
+}
+.vertical-center-modal{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .ivu-modal{
+    top: 0;
+  }
+}
+
+.ask-question{
+  width: 45px;
+  height: 40px;
+  cursor: pointer;
+  text-align: center;
+  background: #fff;
+  color: rgba(0,0,0,.6);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  position: fixed;
+  bottom: 30px;
+  right: 80px;
+}
+
+// 太小时，隐藏搜索
+@media screen and (max-width: 1245px) {
+  .wrapper-header-nav-search{
+    display: none;
+  }
+}

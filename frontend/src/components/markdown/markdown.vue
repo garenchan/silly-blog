@@ -6,6 +6,7 @@
 
 <script>
 import Simplemde from 'simplemde'
+import marked from 'marked'
 import 'simplemde/dist/simplemde.min.css'
 export default {
   name: 'MarkdownEditor',
@@ -58,6 +59,7 @@ export default {
     }
   },
   mounted () {
+    marked.setOptions({ sanitize: false })
     this.editor = new Simplemde(Object.assign(this.options, {
       element: this.$refs.editor,
       initialValue: this.value

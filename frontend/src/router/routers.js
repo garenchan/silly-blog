@@ -1,4 +1,5 @@
 import Main from '@/view/main'
+import GuestMain from '@/view/guest-main'
 // import store from '@/store'
 
 export const testRouter = {
@@ -9,9 +10,7 @@ export const testRouter = {
     hideInMenu: true,
     notCache: true
   },
-  component: () => {
-    return import('@/view/admin/home')
-  }
+  component: GuestMain
 }
 
 export const loginRouter = {
