@@ -130,6 +130,16 @@ export default {
       if (item.params) routerObj.params = item.params
       if (item.query) routerObj.query = item.query
       this.$router.push(routerObj)
+    },
+    /* 管理后台的body样式和游客前台的不一样, 需要进行切换 */
+    toggleBodyClass (add) {
+      if (add) {
+        document.documentElement.classList.add('manage-app')
+        document.body.classList.add('manage-app')
+      } else {
+        document.documentElement.classList.remove('manage-app')
+        document.body.classList.remove('manage-app')
+      }
     }
   },
   watch: {
@@ -142,11 +152,15 @@ export default {
     /**
      * @description 初始化设置面包屑导航和标签导航
      */
+    this.toggleBodyClass(true)
     this.setTagNavList()
     this.addTag(this.$store.state.app.homeRoute)
     this.setBreadCrumb(this.$route.matched)
     // 设置初始语言
     this.setLocal(this.$i18n.locale)
+  },
+  destroyed () {
+    this.toggleBodyClass(false)
   }
 }
 </script>

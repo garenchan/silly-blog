@@ -53,7 +53,23 @@ export default {
           this.$Message.error(message)
         }
       })
+    },
+    /* 管理后台的body样式和游客前台的不一样, 需要进行切换 */
+    toggleBodyClass (add) {
+      if (add) {
+        document.documentElement.classList.add('manage-app')
+        document.body.classList.add('manage-app')
+      } else {
+        document.documentElement.classList.remove('manage-app')
+        document.body.classList.remove('manage-app')
+      }
     }
+  },
+  mounted () {
+    this.toggleBodyClass(true)
+  },
+  destroyed () {
+    this.toggleBodyClass(false)
   }
 }
 </script>

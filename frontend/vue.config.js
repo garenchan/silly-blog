@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const config = require('./config/config.js')
 
 const resolve = dir => {
   return path.join(__dirname, dir)
@@ -27,6 +28,14 @@ module.exports = {
   // https://www.foobar.com/my-app/
   // then change this to '/my-app/'
   baseUrl: BASE_URL,
+  pages: {
+    index: {
+      entry: 'src/main.js',
+      template: 'public/index.html',
+      filename: 'index.html',
+      title: config.blogName
+    }
+  },
   // tweak internal webpack configuration.
   // see https://github.com/vuejs/vue-cli/blob/dev/docs/webpack.md
   chainWebpack: config => {

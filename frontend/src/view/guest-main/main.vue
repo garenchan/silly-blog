@@ -2,53 +2,32 @@
   <div>
     <div class="wrapper">
       <div class="wrapper-header">
-        <nav-menu :active-key="activeKey" @on-change="handleNavMenuChange"></nav-menu>
+        <nav-menu theme="dark" :active-key="activeKey" @on-change="handleNavMenuChange"/>
       </div>
       <div class="wrapper-container">
-        <Row>
-          <i-col span="4" class="wrapper-navigate" style="background: #9ea7b4; height: 100%">
-              left-side
-          </i-col>
-          <i-col span="16">
-              <div class="wrapper-content ivu-article">
-                <slot>11111</slot>
-              </div>
-          </i-col>
-          <i-col span="4" style="background: #9ea7b4">
-              right-side
-          </i-col>
-        </Row>
+        <keep-alive>
+          <router-view/> <!--:key="$route.path"-->
+        </keep-alive>
+        <BackTop/>
       </div>
     </div>
     <div class="footer">
       <div class="footer-main">
-        <Row>
-          <i-col span="5">
-            <h4>
-              <Icon type="logo-github"></Icon>
-              GitHub
-            </h4>
-            <ul>
-              <li>
-                <a href="https://github.com/iview/iview" target="_blank">iView</a>
-              </li>
-              <li>
-                <a href="https://github.com/iview/iview-cli" target="_blank">iView Cli</a>
-              </li>
-            </ul>
-          </i-col>
-        </Row>
+        <i-footer/>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import navMenu from './components/menu'
+import NavMenu from './components/nav-menu'
+import iFooter from './components/footer'
+
 export default {
   name: 'guest-main',
   components: {
-    navMenu
+    NavMenu,
+    iFooter
   },
   data () {
     return {
@@ -65,4 +44,40 @@ export default {
 
 <style lang="less">
 @import "./main.less";
+
+body{
+  // overflow: auto;
+}
+body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+/*正常情况下滑块的样式*/
+body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.05);
+  border-radius: 10px;
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*鼠标悬浮在该类指向的控件上时滑块的样式*/
+body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.2);
+  border-radius: 10px;
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*鼠标悬浮在滑块上时滑块的样式*/
+body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0,0,0,.4);
+  -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,.1);
+}
+/*正常时候的主干部分*/
+body::-webkit-scrollbar-track {
+  border-radius: 10px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0);
+  background-color: white;
+}
+/*鼠标悬浮在滚动条上的主干部分*/
+body::-webkit-scrollbar-track:hover {
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.4);
+  background-color: rgba(0,0,0,.01);
+}
 </style>

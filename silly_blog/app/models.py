@@ -325,6 +325,7 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
 
     children = db.relationship("Category",
                                backref=db.backref("parent", remote_side="Category.id"),
+                               cascade="all,delete",
                                lazy="dynamic")
     articles = db.relationship("Article",
                                backref="category",
@@ -347,11 +348,11 @@ class Category(UUIDMixin, TimestampMixin, ModelBase):
         """Returns default display order"""
         def _max():
             max_order = cls.get_max_order(parent_id)
-            return max_order + 1 if max_order else 1
+            return 1 if max_order is None else max_order + 1
 
         def _min():
             min_order = cls.get_min_order(parent_id)
-            return min_order - 1 if min_order else 1
+            return 1 if min_order is None else min_order - 1
 
         def _random():
             min_order, max_order = db.session.query(

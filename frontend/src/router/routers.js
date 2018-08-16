@@ -4,13 +4,23 @@ import GuestMain from '@/view/guest-main'
 
 export const testRouter = {
   path: '/',
-  name: 'index',
+  // name: '_index',
   meta: {
-    title: '首页',
     hideInMenu: true,
     notCache: true
   },
-  component: GuestMain
+  component: GuestMain,
+  children: [
+    {
+      path: '',
+      name: 'index',
+      meta: {
+        hideInMenu: true,
+        title: '首页'
+      },
+      component: () => import('@/view/guest/home')
+    }
+  ]
 }
 
 export const loginRouter = {
