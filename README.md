@@ -37,6 +37,10 @@
 
 ![article-management](https://github.com/garenchan/silly-blog/blob/master/docs/snapshots/article-management.gif?raw=true)
 
-## 后续计划
+## 前台展示
 
-完成面向游客的展示功能
+目前基本完成了面向游客的前台首页, 感觉做的略丑:
+
+### 前台首页
+
+![index](https://raw.githubusercontent.com/garenchan/silly-blog/master/docs/snapshots/index.png)
