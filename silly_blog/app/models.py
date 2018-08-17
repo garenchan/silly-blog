@@ -425,7 +425,7 @@ class Source(UUIDMixin, ModelBase):
 class Article(UUIDMixin, TimestampMixin, ModelBase):
     """Article Model"""
     __tablename__ = "articles"
-    excludes = ["content", "category_id", "source_id"]
+    excludes = ["content", "user_id", "category_id", "source_id"]
 
     title = db.Column(db.String(255), nullable=False)
     content = deferred(db.Column(db.Text, nullable=False))

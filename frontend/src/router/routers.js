@@ -1,27 +1,49 @@
 import Main from '@/view/main'
-import GuestMain from '@/view/guest-main'
+import GuestMain from '@/view/guest/main'
 // import store from '@/store'
 
-export const testRouter = {
-  path: '/',
-  // name: '_index',
-  meta: {
-    hideInMenu: true,
-    notCache: true
+export const guestPathPrefix = '/'
+
+export const guestRouter = [
+  {
+    path: guestPathPrefix,
+    meta: {
+      hideInMenu: true,
+      notCache: true
+    },
+    component: GuestMain,
+    children: [
+      {
+        path: '',
+        name: 'index',
+        meta: {
+          hideInMenu: true,
+          title: '首页'
+        },
+        component: () => import('@/view/guest/home')
+      }
+    ]
   },
-  component: GuestMain,
-  children: [
-    {
-      path: '',
-      name: 'index',
-      meta: {
-        hideInMenu: true,
-        title: '首页'
-      },
-      component: () => import('@/view/guest/home')
-    }
-  ]
-}
+  {
+    path: guestPathPrefix,
+    meta: {
+      hideInMenu: true,
+      notCache: true
+    },
+    component: GuestMain,
+    children: [
+      {
+        path: '/article/:article_id',
+        name: 'guest_article',
+        meta: {
+          hideInMenu: true,
+          title: '首页'
+        },
+        component: () => import('@/view/guest/article')
+      }
+    ]
+  }
+]
 
 export const loginRouter = {
   path: '/login',
@@ -243,7 +265,7 @@ export const errorRouters = [
 
 // 所有上面定义的路由都要写在下面的routes里
 export const routes = [
-  testRouter,
+  ...guestRouter,
   loginRouter,
   homeRouter,
   ...adminRouters,

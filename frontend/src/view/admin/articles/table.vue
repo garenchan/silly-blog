@@ -127,7 +127,17 @@ export default {
             return h('Row', tags)
           }
         },
-        {title: 'Author', key: 'user', width: 100, searchable: true},
+        {
+          title: 'Author',
+          key: 'user',
+          width: 100,
+          searchable: true,
+          ellipsis: true,
+          tooltip: true,
+          render: (h, params) => {
+            return h('p', params.row.user.name)
+          }
+        },
         // {title: 'Create-Time', key: 'created_at', sortable: true},
         {title: 'Views', key: 'views', width: 100},
         {title: 'Stars', key: 'stars', width: 100},

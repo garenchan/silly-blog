@@ -5,8 +5,8 @@
         <Icon type="md-flower"/>
         欢迎光临{{ blogName }}
       </p>
-      <p>文章总数: 100</p>
-      <p>评论总数: 100</p>
+      <p>用户总数: {{ userCount }}</p>
+      <p>文章总数: {{ articleCount }}</p>
     </Card>
     <Card style="margin-top: 20px">
       <p slot="title">
@@ -17,7 +17,7 @@
     </Card>
     <Carousel style="margin-top: 20px" autoplay :autoplay-speed="15000" loop>
       <CarouselItem :key="item.link" v-for="item in ads">
-        <a :href="item.link" class="ad-carouse">
+        <a :href="item.link" target="_blank" class="ad-carouse">
           <img src="@/assets/images/ad.png">
         </a>
       </CarouselItem>
@@ -27,12 +27,17 @@
 </template>
 
 <script>
-import config from '_conf/config.js'
+import config from '_conf/config'
+import { listUsers } from '@/api/user'
+import { listArticles } from '@/api/article'
+
 export default {
   name: 'right-sider',
   data () {
     return {
       blogName: config.blogName,
+      userCount: 0,
+      articleCount: 0,
       ads: [
         {
           link: 'http://www.baidu.com',
@@ -44,6 +49,30 @@ export default {
         }
       ]
     }
+  },
+  methods: {
+    getUserCount () {
+      return new Promise((resolve, reject) => {
+        listUsers({}).then(res => {
+          this.userCount = res.total
+        }).catch(err => {
+          console.log('load user count failed:' + err)
+        })
+      })
+    },
+    getArticleCount () {
+      return new Promise((resolve, reject) => {
+        listArticles({}).then(res => {
+          this.articleCount = res.total
+        }).catch(err => {
+          console.log('load article count failed:' + err)
+        })
+      })
+    }
+  },
+  mounted () {
+    this.getUserCount()
+    this.getArticleCount()
   }
 }
 </script>

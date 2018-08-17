@@ -7,7 +7,7 @@
             <FormItem label="文章标题" prop="title">
               <Input v-model="form.title" placeholder="请输入文章标题"/>
             </FormItem>
-            <FormItem label="文章摘要">
+            <FormItem label="文章摘要" prop="summary">
               <Input v-model="form.summary" type="textarea" placeholder="请输入文章摘要"/>
             </FormItem>
             <FormItem label="文章内容" prop="content">
@@ -15,8 +15,6 @@
                                preview-class="markdown-body"
                                :localCache="false"
                                :options="editorOptions"/>
-              <!--<markdown-editor v-model="form.content"
-                               :highlight="true"/>-->
             </FormItem>
           </Col>
           <Col span="6">
@@ -89,7 +87,7 @@ import hljs from 'highlight.js'
 
 window.hljs = hljs
 export default {
-  name: 'admin_article_post',
+  name: 'admin_article_edit',
   components: {
     MarkdownEditor
   },
@@ -160,6 +158,7 @@ export default {
           { type: 'string', max: 255, message: '文章标题最多255个字符' }
         ],
         summary: [
+          { required: true, message: '文章摘要不能为空', trigger: 'change' },
           { type: 'string', max: 255, message: '文章摘要最多255个字符' }
         ],
         content: [
@@ -337,7 +336,7 @@ export default {
               else this.saving = false
               const response = err.response
               const data = response.data
-              this.$Message.error(data.error.message)
+              this.$Message.error(JSON.stringify(data.error.message))
             })
           })
         }

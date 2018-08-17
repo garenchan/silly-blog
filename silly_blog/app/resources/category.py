@@ -66,7 +66,7 @@ class CategoryResource(restful.Resource):
     def _to_dict(self, category):
         """Get a dict of category's details"""
         info = category.to_dict()
-        subs = category.children.all()
+        subs = category.children.filter_by(protected=False).order_by(Category.display_order.asc()).all()
         info["subs"] = [self._to_dict(sub) for sub in subs]
         return info
 

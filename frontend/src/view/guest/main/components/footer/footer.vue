@@ -8,7 +8,7 @@
         </h4>
         <ul>
           <li>
-            <router-link :to="index">{{ blogName }}</router-link>
+            <router-link :to="{ name: 'login' }">{{ blogName }}</router-link>
           </li>
           <li>
             Powered by <Icon type="logo-github"></Icon><a :href="poweredBy.link" target="_blank">{{ poweredBy.name }}</a>
@@ -25,7 +25,6 @@ export default {
   name: 'Footer',
   data () {
     return {
-      index: '/',
       blogName: config.blogName,
       poweredBy: config.poweredBy
     }

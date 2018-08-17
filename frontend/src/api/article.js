@@ -38,6 +38,17 @@ export const createArticle = ({title, content, sourceId, categoryId, ...extras})
 }
 
 export const updateArticle = (id, {...info}) => {
+  let convertAttrs = {
+    sourceId: 'source_id',
+    categoryId: 'category_id'
+  }
+  for (var attr in convertAttrs) {
+    if (attr in info) {
+      let val = info[attr]
+      delete info[attr]
+      info[convertAttrs[attr]] = val
+    }
+  }
   const data = {
     article: info
   }

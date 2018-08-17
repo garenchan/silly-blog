@@ -63,7 +63,10 @@ class ArticleResource(restful.Resource):
     def _article_to_dict(article, content=False):
         """Get a dict of article's details"""
         info = article.to_dict(content=content)
-        info["user"] = article.user.name
+        info["user"] = {
+            "id": article.user_id,
+            "name": article.user.name
+        }
         # article's categories is a list with hierarchies
         info["category"] = []
         category = article.category
@@ -263,9 +266,10 @@ class ArticleResource(restful.Resource):
         article.update(**result.data)
 
         # clear tags first and add
-        if tags:
-            article.tags = []
-            db.session.add(article)
+        # if tags:
+        #    article.tags = []
+        #    db.session.add(article)
+        include_tags = set()
         for _tag in tags:
             tag_id = _tag.get("id")
             tag_name = _tag.get("name")
@@ -281,7 +285,12 @@ class ArticleResource(restful.Resource):
                     db.session.rollback()
                     tag = Tag.query.filter_by(name=tag_name).first()
             if tag:
-                article.tags.append(tag)
+                include_tags.add(tag)
+                if tag not in article.tags:
+                    article.tags.append(tag)
+        for _tag in article.tags[:]:
+            if _tag not in include_tags:
+                article.tags.remove(_tag)
 
         try:
             db.session.add(article)
