@@ -73,6 +73,7 @@
           </Col>
         </Row>
       </Form>
+      <Spin size="large" fix v-if="loading"></Spin>
     </Card>
   </div>
 </template>
@@ -84,6 +85,7 @@ import { listCategories } from '@/api/category'
 import { listTags } from '@/api/tag'
 import { createArticle, updateArticle, getArticle } from '@/api/article'
 import hljs from 'highlight.js'
+import '@/styles/markdown.less'
 
 window.hljs = hljs
 export default {
@@ -93,6 +95,7 @@ export default {
   },
   data () {
     return {
+      loading: false,
       articleId: this.$route.params.article_id || '',
       published: false,
       sources: [],
@@ -219,7 +222,9 @@ export default {
     getCurrentArticle () {
       if (this.isEdit && this.articleId) {
         return new Promise((resolve, reject) => {
+          this.loading = true
           getArticle(this.articleId).then(res => {
+            this.loading = false
             this.form.title = res.article.title
             this.form.summary = res.article.summary
             this.form.content = res.article.content
@@ -232,6 +237,7 @@ export default {
             this.published = res.article.published
             resolve()
           }).catch(err => {
+            this.loading = false
             const response = err.response
             const data = response.data
             this.$Message.error(data.error.message)
@@ -364,8 +370,6 @@ export default {
 
 <style lang="less">
 @import '~font-awesome/css/font-awesome.css';
-@import '~github-markdown-css/github-markdown.css';
-@import '~highlight.js/styles/atom-one-dark.css';
 .publish-button{
     float: right;
     margin-left: 10px;

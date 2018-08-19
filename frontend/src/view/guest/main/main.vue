@@ -6,8 +6,9 @@
       </div>
       <div class="wrapper-container">
         <keep-alive>
-          <router-view/> <!--:key="$route.path"-->
+          <router-view v-if="!($route.meta && $route.meta.notCache)"></router-view>
         </keep-alive>
+        <router-view v-if="$route.meta && $route.meta.notCache"></router-view>
         <BackTop/>
       </div>
     </div>

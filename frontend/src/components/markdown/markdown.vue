@@ -6,8 +6,8 @@
 
 <script>
 import Simplemde from 'simplemde'
-import marked from 'marked'
 import 'simplemde/dist/simplemde.min.css'
+import marked from 'marked'
 export default {
   name: 'MarkdownEditor',
   props: {
@@ -59,9 +59,16 @@ export default {
     }
   },
   mounted () {
-    marked.setOptions({ sanitize: false })
+    const renderer = new marked.Renderer()
+    const markedOptions = {
+      renderer,
+      gfm: true,
+      tables: true,
+      breaks: false
+    }
     this.editor = new Simplemde(Object.assign(this.options, {
       element: this.$refs.editor,
+      previewRender: text => marked(text, markedOptions),
       initialValue: this.value
     }))
     // 添加自定义 previewClass

@@ -37,7 +37,8 @@ export const guestRouter = [
         name: 'guest_article',
         meta: {
           hideInMenu: true,
-          title: '首页'
+          notCache: true,
+          title: '文章'
         },
         component: () => import('@/view/guest/article')
       }

@@ -84,6 +84,7 @@ import { listCategories } from '@/api/category'
 import { listTags } from '@/api/tag'
 import { createArticle, updateArticle, getArticle } from '@/api/article'
 import hljs from 'highlight.js'
+import '@/styles/markdown.less'
 
 window.hljs = hljs
 export default {
@@ -364,8 +365,6 @@ export default {
 
 <style lang="less">
 @import '~font-awesome/css/font-awesome.css';
-@import '~github-markdown-css/github-markdown.css';
-@import '~highlight.js/styles/atom-one-dark.css';
 .publish-button{
     float: right;
     margin-left: 10px;
