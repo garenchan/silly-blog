@@ -22,7 +22,6 @@
         </a>
       </CarouselItem>
     </Carousel>
-
   </div>
 </template>
 

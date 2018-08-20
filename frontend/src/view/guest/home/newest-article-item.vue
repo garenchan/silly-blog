@@ -60,7 +60,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .cover {
   height: 130px;
   background-repeat: no-repeat;

@@ -5,9 +5,7 @@
         <article-content/>
       </i-col>
       <i-col span="6" :gutter="20">
-        <Affix :offset-top="75">
-          <right-sider/>
-        </Affix>
+        <right-sider/>
       </i-col>
     </Row>
   </div>
@@ -15,7 +13,7 @@
 
 <script>
 import ArticleContent from './article-content.vue'
-import RightSider from '../home/right-sider.vue'
+import RightSider from './right-sider.vue'
 export default {
   name: 'guest_article',
   components: {

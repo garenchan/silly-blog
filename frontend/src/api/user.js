@@ -39,6 +39,13 @@ export const listUsers = ({since, sort, direction, page, pageSize, ...filters}) 
   })
 }
 
+export const getUser = (id) => {
+  return axios.request({
+    url: `users/${id}`,
+    method: 'get'
+  })
+}
+
 export const createUser = ({name, password, roleId, ...extras}) => {
   for (var attr of ['email', 'display_name']) {
     if (!extras[attr]) delete extras[attr]

@@ -1,11 +1,23 @@
 <template>
   <div>
     <Card :dis-hover="true">
-      <div>
-        <Avatar style="background-color: #f56a00">{{ article.source && article.source.name }}</Avatar>
-        <span class="title">&nbsp;{{ article.title }}</span>
+      <div slot="title">
+        <div class="title-box">
+          <Avatar :style="{background: avatarColor}">{{ article.source && article.source.name }}</Avatar>
+          <span class="title">&nbsp;{{ article.title }}</span>
+        </div>
+        <div class="info-box">
+          <Tooltip :content="publishedTime" placement="bottom">
+            <Tag class="published-time" v-if="article.published_at">发表于<Time :time="article.published_at"/></Tag>
+          </Tooltip>
+          <Tag v-if="article.category">{{ category }}</Tag>
+          <Tag :key="tag.id" v-for="tag in article.tags" color="primary">
+            <Icon type="ios-pricetags-outline"/>{{ tag.name }}
+          </Tag>
+          <Tag style="float: right;" v-if="article.stars != undefined">{{ '点赞:' + article.stars }}</Tag>
+          <Tag style="float: right;" v-if="article.views != undefined">{{ '阅读:' + article.views }}</Tag>
+        </div>
       </div>
-      <Divider />
       <article v-html="content" class="markdown-body">
       </article>
       <Spin size="large" fix v-if="loading"></Spin>
@@ -15,7 +27,6 @@
 
 <script>
 import { getArticle } from '@/api/article'
-import { EventBus } from '@/libs/bus'
 // import showdown from 'showdown'
 import marked from 'marked'
 import hljs from 'highlight.js'
@@ -30,6 +41,27 @@ export default {
       content: '',
       loading: false
       // converter: null
+    }
+  },
+  computed: {
+    avatarColor () {
+      const colorMap = {
+        '原创': 'green',
+        '转载': 'red',
+        '翻译': 'yellow'
+      }
+      let sourceName = this.article.source && this.article.source.name
+      if (sourceName) return colorMap[sourceName] || 'black'
+      else return 'white'
+    },
+    publishedTime () {
+      let date = new Date(this.article.published_at || null)
+      return date.toLocaleString()
+    },
+    category () {
+      let categories = []
+      for (var item of this.article.category) categories.push(item.name)
+      return categories.join(' - ')
     }
   },
   methods: {
@@ -55,7 +87,8 @@ export default {
           // this.content = this.converter.makeHtml(article.content)
           this.content = this.renderMd(article.content)
           // 更新顶部导航栏
-          if (article.category.length) EventBus.$emit('menuChanged', article.category.slice(-1)[0].name)
+          if (article.category.length) this.$root.$emit('menuChanged', article.category.slice(-1)[0].name)
+          this.$root.$emit('articleAuthor', article.user.id)
         }).catch(err => {
           this.loading = false
           console.log('load current article failed:' + err)
@@ -86,9 +119,15 @@ export default {
 }
 </script>
 
-<style lang="less">
+<style lang="less" scoped>
+.title-box {
+  display: table;
+  margin-bottom: 10px;
+}
 .title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
+  display : table-cell;
+  vertical-align: middle;
 }
 </style>

@@ -29,7 +29,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .content {
   min-height: calc(100vh - 210px);
   margin-left: 250px;

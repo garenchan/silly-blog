@@ -39,7 +39,6 @@
 
 <script>
 import { listCategories } from '@/api/category'
-import { EventBus } from '@/libs/bus'
 
 export default {
   name: 'NavMenu',
@@ -73,7 +72,7 @@ export default {
     }
   },
   mounted () {
-    EventBus.$on('menuChanged', (val) => {
+    this.$root.$on('menuChanged', (val) => {
       this.currentActiveKey = val
     })
     return new Promise((resolve, reject) => {

@@ -2,13 +2,13 @@
   <div>
     <div class="wrapper">
       <div class="wrapper-header">
-        <nav-menu theme="dark" :active-key="activeKey" @on-change="handleNavMenuChange"/>
+        <nav-menu theme="light" :active-key="activeKey" @on-change="handleNavMenuChange"/>
       </div>
       <div class="wrapper-container">
         <keep-alive>
-          <router-view v-if="!($route.meta && $route.meta.notCache)"></router-view>
+          <router-view :key="$route.path" v-if="!($route.meta && $route.meta.notCache)"></router-view>
         </keep-alive>
-        <router-view v-if="$route.meta && $route.meta.notCache"></router-view>
+        <router-view :key="$route.path" v-if="$route.meta && $route.meta.notCache"></router-view>
         <BackTop/>
       </div>
     </div>
