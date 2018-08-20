@@ -6,8 +6,8 @@
 
 <script>
 import Simplemde from 'simplemde'
-import 'simplemde/dist/simplemde.min.css'
 import marked from 'marked'
+import 'simplemde/dist/simplemde.min.css'
 export default {
   name: 'MarkdownEditor',
   props: {
