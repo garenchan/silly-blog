@@ -23,11 +23,11 @@
               <Icon type="ios-keypad"></Icon>
               {{ menu.name }}
             </template>
-            <Menu-item :name="sub.name" :key="sub.id" v-for="sub in menu.subs">
+            <Menu-item :name="sub.name" :key="sub.id" :to="{ name: 'guest_category', params: { category_id: sub.id }}" v-for="sub in menu.subs">
               {{ sub.name }}
             </Menu-item>
           </Submenu>
-          <Menu-item v-else :name="menu.name" :key="menu.id">
+          <Menu-item v-else :name="menu.name" :key="menu.id" :to="{ name: 'guest_category', params: { category_id: menu.id }}">
             <Icon type="ios-navigate"></Icon>
             {{ menu.name }}
           </Menu-item>
@@ -43,24 +43,19 @@ import { listCategories } from '@/api/category'
 export default {
   name: 'NavMenu',
   props: {
-    activeKey: String,
     theme: String
   },
   data () {
     return {
       search: '',
-      currentActiveKey: this.activeKey,
       navMenus: [],
       searchText: '搜索文章...',
       notFoundText: '未找到'
     }
   },
-  watch: {
-    activeKey (val) {
-      this.currentActiveKey = val
-    },
-    currentActiveKey (val) {
-      this.$emit('on-change', val)
+  computed: {
+    currentActiveKey () {
+      return this.$store.state.guestNavMenu.activeKey
     }
   },
   methods: {
@@ -72,9 +67,6 @@ export default {
     }
   },
   mounted () {
-    this.$root.$on('menuChanged', (val) => {
-      this.currentActiveKey = val
-    })
     return new Promise((resolve, reject) => {
       listCategories({ parent_id: '', sort: 'display_order', direction: 'asc' }).then(res => {
         this.navMenus = res.categories

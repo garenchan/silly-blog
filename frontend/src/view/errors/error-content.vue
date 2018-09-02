@@ -23,6 +23,23 @@ export default {
     code: String,
     desc: String,
     src: String
+  },
+  methods: {
+    toggleBodyClass (add) {
+      if (add) {
+        document.documentElement.classList.add('manage-app')
+        document.body.classList.add('manage-app')
+      } else {
+        document.documentElement.classList.remove('manage-app')
+        document.body.classList.remove('manage-app')
+      }
+    }
+  },
+  mounted () {
+    this.toggleBodyClass(true)
+  },
+  beforeDestroy () {
+    this.toggleBodyClass(false)
   }
 }
 </script>

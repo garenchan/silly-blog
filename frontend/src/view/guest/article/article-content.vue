@@ -26,6 +26,7 @@
 </template>
 
 <script>
+import { mapMutations } from 'vuex'
 import { getArticle } from '@/api/article'
 // import showdown from 'showdown'
 import marked from 'marked'
@@ -65,6 +66,9 @@ export default {
     }
   },
   methods: {
+    ...mapMutations([
+      'setActiveKey'
+    ]),
     renderMd (md) {
       const renderer = new marked.Renderer()
       return marked(md, {
@@ -87,11 +91,13 @@ export default {
           // this.content = this.converter.makeHtml(article.content)
           this.content = this.renderMd(article.content)
           // 更新顶部导航栏
-          if (article.category.length) this.$root.$emit('menuChanged', article.category.slice(-1)[0].name)
+          if (article.category.length) this.setActiveKey(article.category.slice(-1)[0].name)
           this.$root.$emit('articleAuthor', article.user.id)
         }).catch(err => {
           this.loading = false
           console.log('load current article failed:' + err)
+          let response = err.response
+          if (response.status === 404) this.$router.push({ name: 'error_404' })
         })
       })
     }
@@ -115,6 +121,9 @@ export default {
     })
     this.converter.setFlavor('github') */
     this.getCurrentArticle()
+  },
+  beforeDestroy () {
+    this.setActiveKey(null)
   }
 }
 </script>

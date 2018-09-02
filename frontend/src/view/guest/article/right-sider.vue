@@ -13,13 +13,15 @@
     </Card>
     <Card style="margin-top: 20px">
       <p slot="title">
-        <Icon type="md-flame"/>
+        <Icon type="ios-boat"/>
         热门文章
       </p>
       <div :key="article.id" v-for="article in hotestArticles">
         <router-link :to="{ name: 'guest_article', params: { article_id: article.id }}">
           [{{ article.source.name }}] {{ article.title }}
         </router-link>
+        <Tag v-if="article.published_at"><Time :time="article.published_at"/></Tag>
+        <Tag v-if="article.views != undefined">{{ '阅读:' + article.views }}</Tag>
       </div>
       <Spin size="large" fix v-if="articleLoading"></Spin>
     </Card>
@@ -66,7 +68,7 @@ export default {
           sort: 'views',
           direction: 'desc',
           page: 1,
-          pageSize: 5
+          pageSize: 10
         }
         this.articleLoading = true
         listArticles(params).then(res => {

@@ -33,6 +33,26 @@ export const guestRouter = [
     component: GuestMain,
     children: [
       {
+        path: '/category/:category_id',
+        name: 'guest_category',
+        meta: {
+          hideInMenu: true,
+          notCache: true,
+          title: '分类'
+        },
+        component: () => import('@/view/guest/category')
+      }
+    ]
+  },
+  {
+    path: guestPathPrefix,
+    meta: {
+      hideInMenu: true,
+      notCache: true
+    },
+    component: GuestMain,
+    children: [
+      {
         path: '/article/:article_id',
         name: 'guest_article',
         meta: {

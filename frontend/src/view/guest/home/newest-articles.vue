@@ -79,8 +79,10 @@ export default {
 .newest-article-card .ivu-table-wrapper {
   border-top-width: 0px;
   border-left-width: 0px;
+  border-right-width: 0px;
 }
 .newest-article-card .ivu-table-cell {
   padding-left: 0px;
+  padding-right: 0px;
 }
 </style>

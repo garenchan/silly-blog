@@ -18,7 +18,7 @@ export default {
   methods: {
     backHome () {
       this.$router.replace({
-        name: 'home'
+        name: 'index'
       })
     },
     backPrev () {
@@ -26,10 +26,10 @@ export default {
     }
   },
   mounted () {
-    this.timer = setInterval(() => {
+    /* this.timer = setInterval(() => {
       if (this.second === 0) this.backPrev()
       else this.second--
-    }, 1000)
+    }, 1000) */
   },
   beforeDestroy () {
     clearInterval(this.timer)
