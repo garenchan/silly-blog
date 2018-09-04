@@ -120,11 +120,11 @@ class ArticleResource(restful.Resource):
         # filter by `category_id`
         category_id = request.args.get("category_id")
         if category_id is not None:
-            query = query.filter_by(category_id=category_id)
+            query = query.filter(Article.category_id==category_id)
         # filter by `source_id`
         source_id = request.args.get("source_id")
         if source_id is not None:
-            query = query.filter_by(source_id=source_id)
+            query = query.filter(Article.source_id==source_id)
 
         # since
         since = request.args.get("since")

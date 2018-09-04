@@ -6,7 +6,7 @@
         <h4>{{ code }}</h4>
         <h5>{{ desc }}</h5>
       </div>
-      <back-btn-group class="back-btn-group"></back-btn-group>
+      <back-btn-group class="back-btn-group" :code="code"></back-btn-group>
     </div>
   </div>
 </template>

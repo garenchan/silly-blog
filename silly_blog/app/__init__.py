@@ -59,6 +59,8 @@ api = restful.Api(app)
 def custom_error_handler(orig, e):
     if isinstance(e, HTTPException):
         return make_error_response(e.code, e.description)
+    else:
+        return make_error_response(500, "Internal Server Error")
     return orig(e)
 
 

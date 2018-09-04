@@ -73,6 +73,7 @@ export default {
 </script>
 
 <style>
+/*
 .newest-article-card > .ivu-card-body {
   padding: 0px;
 }
@@ -84,5 +85,5 @@ export default {
 .newest-article-card .ivu-table-cell {
   padding-left: 0px;
   padding-right: 0px;
-}
+} */
 </style>

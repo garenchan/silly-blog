@@ -13,13 +13,24 @@
                :no-data-text="noDataText"
                :data="articles"/>
       </div>
+      <div style="margin: 10px;overflow: hidden" v-if="dataTotal > 0">
+        <div style="float: right;">
+            <Page :total="dataTotal"
+                  :page-size-opts="pageSizeOpts"
+                  :page-size="pageSize"
+                  :current="currentPage"
+                  @on-change="changePage"
+                  @on-page-size-change="changePageSize"/>
+        </div>
+      </div>
     </Card>
   </div>
 </template>
 
 <script>
 import { mapMutations } from 'vuex'
-import { getCategory } from '@/api/category'
+import { listArticles } from '@/api/article'
+import CategoryArticleItem from './category-article-item.vue'
 
 export default {
   name: 'category-content',
@@ -27,31 +38,65 @@ export default {
     return {
       categoryId: this.$route.params.category_id,
       loading: false,
-      columns: [],
+      columns: [
+        {
+          key: 'id',
+          render: (h, params) => {
+            return h(CategoryArticleItem, {
+              props: {
+                article: params.row
+              }
+            })
+          }
+        }
+      ],
       noDataText: '尚无文章, 亲亲速度来发表喔!',
-      articles: []
+      articles: [],
+      // 分页显示
+      dataTotal: 0,
+      pageSize: 10,
+      pageSizeOpts: [10, 15, 20],
+      currentPage: 1,
+      sortColumn: 'published_at',
+      SortDirection: 'desc'
     }
   },
   methods: {
     ...mapMutations([
       'setActiveKey'
     ]),
-    getCurrentCategory () {
+    getCategoryArticles () {
       return new Promise((resolve, reject) => {
-        getCategory(this.categoryId).then(res => {
-          let category = res.category
-          // 更新顶部导航栏
-          this.setActiveKey(category.name)
+        let params = {
+          published: true,
+          sort: this.sortColumn,
+          direction: this.SortDirection,
+          page: this.currentPage,
+          pageSize: this.pageSize,
+          category_id: this.categoryId
+        }
+        this.loading = true
+        listArticles(params).then(res => {
+          this.loading = false
+          this.articles = res.articles
+          this.dataTotal = res.total
         }).catch(err => {
-          console.log('load current category failed:' + err)
-          let response = err.response
-          if (response.status === 404) this.$router.push({ name: 'error_404' })
+          this.loading = false
+          console.log('load category articles failed:' + err)
         })
       })
+    },
+    changePage (index) {
+      this.currentPage = index
+      this.getCategoryArticles()
+    },
+    changePageSize (size) {
+      this.pageSize = size
+      this.getCategoryArticles()
     }
   },
   mounted () {
-    this.getCurrentCategory()
+    this.getCategoryArticles()
   },
   beforeDestroy () {
     this.setActiveKey(null)

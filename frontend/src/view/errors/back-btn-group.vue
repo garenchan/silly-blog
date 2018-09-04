@@ -1,7 +1,8 @@
 <template>
   <div>
     <Button size="large" type="text" @click="backHome">返回首页</Button>
-    <Button size="large" type="text">返回上一页({{ second }}s)</Button>
+    <!--<Button size="large" type="text">返回上一页({{ second }}s)</Button>-->
+    <Button size="large" type="text" @click="backPrev" v-if="code !== '404'">返回上一页</Button>
   </div>
 </template>
 
@@ -9,6 +10,9 @@
 import './error.less'
 export default {
   name: 'backBtnGroup',
+  props: {
+    code: String
+  },
   data () {
     return {
       second: 5,
