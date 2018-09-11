@@ -1,5 +1,11 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+    silly_blog.config
+    ~~~~~~~~~~~~~~~~
+
+    Default configurations for different environment.
+"""
+
 import os
 
 
@@ -7,25 +13,36 @@ DIR_NAME = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
-    """Basic Configurations"""
-    SECRET_KEY = "468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b"
+    """Basic Configurations."""
 
-    # make jsonify use utf-8 encoding, maybe default?
-    JSON_AS_ASCII = False
+    DEBUG = False
+    TESTING = False
+    PROPAGATE_EXCEPTIONS = True
+    TRAP_HTTP_EXCEPTIONS = False
+    SECRET_KEY = '468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b'
+    PREFERRED_URL_SCHEME = 'http'  # used for URL generation
+    MAX_CONTENT_LENGTH = 1  # limit size of incoming request to 10MB
+    JSON_AS_ASCII = False  # serialize objects to unicode-encoded JSON
+    JSON_SORT_KEYS = True
 
     # sqlalchemy related
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(DIR_NAME, "db.sqlite")
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DIR_NAME, 'db.sqlite')
     SQLALCHEMY_ECHO = False
-    # default is None, will issue a warning
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # default is None, will issue a warning
 
 
 class TestingConfig(Config):
-    pass
+    """Configurations For Testing Environment."""
+
+    TESTING = True
 
 
 class DevelopmentConfig(Config):
-    """Configurations For Dev Environment"""
+    """Configurations For Dev Environment."""
+
+    DEBUG = True
+
+    # sqlalchemy related
     SQLALCHEMY_ECHO = True
 
     # token auth related
@@ -33,23 +50,26 @@ class DevelopmentConfig(Config):
 
 
 class ProductionConfig(Config):
-    pass
+    """Configurations For Production Environment."""
+
+    PREFERRED_URL_SCHEME = 'https'
 
 
 _configs = dict(
-    test=TestingConfig,
-    dev=DevelopmentConfig,
-    prod=ProductionConfig,
+    testing=TestingConfig,
+    development=DevelopmentConfig,
+    production=ProductionConfig,
     default=DevelopmentConfig,
 )
 
 
 def get_config(name, raise_error=False):
+    """Get config object corresponding to the name."""
     config = _configs.get(name)
     if config:
         return config
     elif raise_error:
-        raise RuntimeError("%r config not found, you need to choose it from"
-                           "%s" % (name, list(_configs.keys())))
+        raise RuntimeError('%r config not found, you need to choose it from'
+                           '%s' % (name, list(_configs.keys())))
     else:
-        return _configs["default"]
+        return _configs['default']

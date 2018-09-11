@@ -160,7 +160,7 @@ class User(UUIDMixin, ModelBase):
     __tablename__ = "users"
     excludes = ["role_id"]
 
-    role_id = db.Column(db.Integer,
+    role_id = db.Column(db.String(64),
                         db.ForeignKey("roles.id", ondelete="CASCADE"))
     enabled = db.Column(db.Boolean, default=True)
     local_user = db.relationship("LocalUser",
