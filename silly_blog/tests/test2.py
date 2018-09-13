@@ -1,23 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import functools
+from flask.helpers import locked_cached_property
 
 
 class Test:
 
-    def test(self, a):
-        print(a)
+    @locked_cached_property
+    def test(self):
+        print(123)
+        return 22
 
 
-t = Test()
-orig = t.test
-
-def replace(orig, e):
-    #print(self)
-    print(orig)
-    print(e)
-
-t.test(123)
-t.test = functools.partial(replace, t.test)
-print(t.test)
-t.test(123)
+if __name__ == '__main__':
+    t = Test()
+    t.test
+    t.test

@@ -9,3 +9,5 @@
 ## backend-related
 
 1. 在配置文件中设置flask的DEBUG模式是不起作用的，只能通过环境变量FLASK_DEBUG来设置
+
+2. MAX_CONTENT_LENGTH配置选项只对提交的表单起作用，而且只是通过与头部Content-Length进行了简单比较，没有在IO层面进行校验

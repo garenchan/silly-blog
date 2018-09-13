@@ -17,7 +17,7 @@ from silly_blog.configs import get_config
 from silly_blog.contrib.auth import HTTPTokenAuth
 from silly_blog.contrib.jwtoken import JSONWebSignature
 from silly_blog.contrib.utils import make_error_response
-from silly_blog.contrib.middleware import SizeLimit
+from silly_blog.contrib.middleware import SizeLimitMiddleware
 
 
 LOG = logging.getLogger(__name__)
@@ -58,6 +58,11 @@ def create_app():
     # auth related
     auth.init_app(_app)
     jws.init_app(_app)
+    # enable CORS
+    CORS(_app)
+    # Add `sizelimit` middleware
+    _app.wsgi_app = SizeLimitMiddleware(_app)
+
     # globally disable strict slashes
     _app.url_map.strict_slashes = False
 
@@ -65,11 +70,8 @@ def create_app():
 
 
 app = create_app()
-# enable CORS
-CORS(app)
 # NOTE: `flask-restful` has a issue: can't defer initialization for app but bp.
 api = restful.Api(app)
-app.wsgi_app = SizeLimit(app.wsgi_app)
 
 
 # FIXME: `flask-restful` is very aggressive, will intercept exception in midway.
