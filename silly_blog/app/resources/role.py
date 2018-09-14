@@ -5,7 +5,7 @@ import logging
 from flask import request
 import flask_restful as restful
 
-from silly_blog.app import api, db, auth
+from silly_blog.app.resources import api
 from silly_blog.app.models import Role
 from silly_blog.contrib.utils import make_error_response, parse_isotime
 

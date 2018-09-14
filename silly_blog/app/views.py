@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from flask import jsonify
+from flask import Blueprint, jsonify
 
-from silly_blog.app import app, __version__
+from silly_blog.app import __version__
 
 
-@app.route('/')
+other_bp = Blueprint('other', __name__)
+
+
+@other_bp.route('/')
 def index():
     return jsonify({
         'name': __name__.split('.', 1)[0],

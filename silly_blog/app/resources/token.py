@@ -8,7 +8,8 @@ import flask_restful as restful
 from marshmallow import Schema, fields
 from marshmallow.validate import Length
 
-from silly_blog.app import api, auth, jws
+from silly_blog.app import auth, jws
+from silly_blog.app.resources import api
 from silly_blog.app.models import User
 from silly_blog.contrib.utils import envelope_json_required, make_error_response
 
@@ -22,7 +23,7 @@ class GenerateTokenSchema(Schema):
     password = fields.Str(required=True, validate=Length(min=1, max=64))
 
 
-@api.resource("/tokens")
+@api.resource('/tokens', methods=['GET', 'POST'], endpoint='tokens')
 class AuthResource(restful.Resource):
 
     def __init__(self):

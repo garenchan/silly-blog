@@ -10,7 +10,8 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length, Email
 
-from silly_blog.app import api, db, auth
+from silly_blog.app import db, auth
+from silly_blog.app.resources import api
 from silly_blog.app.models import User, LocalUser
 from silly_blog.contrib.utils import (envelope_json_required,
                                       make_error_response,

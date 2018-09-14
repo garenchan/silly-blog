@@ -36,6 +36,9 @@ class TestingConfig(Config):
 
     TESTING = True
 
+    # sqlalchemy related
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+
 
 class DevelopmentConfig(Config):
     """Configurations For Dev Environment."""

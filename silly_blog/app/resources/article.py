@@ -8,11 +8,12 @@ import flask_restful as restful
 from sqlalchemy.exc import DatabaseError, IntegrityError
 from sqlalchemy.sql.elements import UnaryExpression
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields
 from marshmallow.validate import Length
 
-from silly_blog.app import api, db, auth
-from silly_blog.app.models import Article, Tag, User, LocalUser
+from silly_blog.app import db, auth
+from silly_blog.app.resources import api
+from silly_blog.app.models import Article, Tag, LocalUser
 from silly_blog.contrib.utils import (envelope_json_required, str2bool,
                                       make_error_response, parse_isotime)
 

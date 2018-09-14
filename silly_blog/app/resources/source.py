@@ -4,7 +4,7 @@ import logging
 
 import flask_restful as restful
 
-from silly_blog.app import api
+from silly_blog.app.resources import api
 from silly_blog.app.models import Source
 from silly_blog.contrib.utils import make_error_response
 
