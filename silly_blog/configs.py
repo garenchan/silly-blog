@@ -26,7 +26,6 @@ class Config(object):
     JSON_SORT_KEYS = True
 
     # sqlalchemy related
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DIR_NAME, 'db.sqlite')
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # default is None, will issue a warning
 
@@ -46,6 +45,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
 
     # sqlalchemy related
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DIR_NAME, 'db-dev.sqlite')
     SQLALCHEMY_ECHO = True
 
     # token auth related
@@ -56,6 +56,9 @@ class ProductionConfig(Config):
     """Configurations For Production Environment."""
 
     PREFERRED_URL_SCHEME = 'https'
+
+    # sqlalchemy related
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DIR_NAME, 'db.sqlite')
 
 
 _configs = dict(

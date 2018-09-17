@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from silly_blog.app import create_app, db
+from silly_blog.app import create_app, db, models
 
 
 os.environ['FLASK_ENV'] = 'testing'
@@ -11,11 +11,17 @@ os.environ['FLASK_ENV'] = 'testing'
 
 @pytest.fixture
 def app():
-    _app = create_app()
-    db.create_all()
-    yield _app
-    db.session.remove()
-    db.drop_all()
+    app = create_app()
+    with app.app_context():
+        db.create_all()
+        models.Role.insert_default_values()
+        models.User.insert_default_values()
+
+    yield app
+
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
 
 
 @pytest.fixture

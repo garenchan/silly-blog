@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-__version__ = 'v1.0.0'
-
 import os
 import functools
 import logging.config
@@ -87,8 +85,8 @@ def register_blueprints(app):
 
 
 def minor_repairs(app):
-    """Some extensions is very aggressive, will cause some mechanisms of Flask
-    not work. So we need to fix them.
+    """Some extensions is very aggressive, will cause some mechanisms of
+    Flask not work. So we need to fix them.
     """
     def custom_error_handler(_orig, e):
         if isinstance(e, HTTPException):
@@ -107,9 +105,10 @@ def minor_repairs(app):
 
 def add_cli_command(app):
     """add some useful cli command to app."""
-    from silly_blog.app.cli import migrate_cli_hack
+    from silly_blog.app.cli import COMMANDS
 
-    migrate_cli_hack()
+    for command in COMMANDS:
+        app.cli.add_command(command)
 
     @app.shell_context_processor
     def make_shell_context():

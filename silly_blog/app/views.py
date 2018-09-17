@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, jsonify
 
-from silly_blog.app import __version__
+from silly_blog import __version__
 
 
 other_bp = Blueprint('other', __name__)
