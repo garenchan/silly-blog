@@ -19,7 +19,7 @@ class Config(object):
     TESTING = False
     PROPAGATE_EXCEPTIONS = True
     TRAP_HTTP_EXCEPTIONS = False
-    SECRET_KEY = '468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b'
+    SECRET_KEY = b'468f67c072f9490f29ea2b90594e7c0829293b9f1ecc265b'
     PREFERRED_URL_SCHEME = 'http'  # used for URL generation
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # limit size of incoming request to 10MB
     JSON_AS_ASCII = False  # serialize objects to unicode-encoded JSON

@@ -55,10 +55,8 @@ class UpdateArticleSchema(Schema):
 class ArticleResource(restful.Resource):
     """Controller for article resources"""
 
-    def __init__(self):
-        super().__init__()
-        self.post_schema = CreateArticleSchema()
-        self.put_schema = UpdateArticleSchema()
+    post_schema = CreateArticleSchema()
+    put_schema = UpdateArticleSchema()
 
     @staticmethod
     def _article_to_dict(article, content=False):

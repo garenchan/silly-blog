@@ -44,10 +44,8 @@ class UpdateTagSchema(Schema):
 class TagResource(restful.Resource):
     """Controller for article tag resources"""
 
-    def __init__(self):
-        super().__init__()
-        self.post_schema = CreateTagSchema()
-        self.put_schema = UpdateTagSchema()
+    post_schema = CreateTagSchema()
+    put_schema = UpdateTagSchema()
 
     @staticmethod
     def _get_by_id(tag_id):

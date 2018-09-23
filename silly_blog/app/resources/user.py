@@ -54,10 +54,8 @@ class UpdateUserSchema(Schema):
 class UserResource(restful.Resource):
     """Controller for user resources"""
 
-    def __init__(self):
-        super().__init__()
-        self.post_schema = CreateUserSchema()
-        self.put_schema = UpdateUserSchema()
+    post_schema = CreateUserSchema()
+    put_schema = UpdateUserSchema()
 
     @staticmethod
     def _user_to_dict(user):

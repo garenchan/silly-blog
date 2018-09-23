@@ -26,9 +26,7 @@ class GenerateTokenSchema(Schema):
 @api.resource('/tokens', methods=['GET', 'POST'], endpoint='tokens')
 class AuthResource(restful.Resource):
 
-    def __init__(self):
-        super().__init__()
-        self.post_schema = GenerateTokenSchema()
+    post_schema = GenerateTokenSchema()
 
     @auth.login_required
     def get(self):

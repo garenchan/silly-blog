@@ -59,10 +59,8 @@ class UpdateCategorySchema(Schema):
 class CategoryResource(restful.Resource):
     """Controller for article category resources"""
 
-    def __init__(self):
-        super().__init__()
-        self.post_schema = CreateCategorySchema()
-        self.put_schema = UpdateCategorySchema()
+    post_schema = CreateCategorySchema()
+    put_schema = UpdateCategorySchema()
 
     def _to_dict(self, category):
         """Get a dict of category's details"""
