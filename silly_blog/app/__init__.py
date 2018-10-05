@@ -65,6 +65,7 @@ def initialize_extensions(app):
     migrate.init_app(app, db=db)
     # auth related
     auth.init_app(app)
+    # token related
     jws.init_app(app)
     # enable CORS
     cors.init_app(app)
@@ -78,9 +79,9 @@ def initialize_extensions(app):
 def register_blueprints(app):
     """Register blueprints with specified app."""
     from silly_blog.app.resources import api_bp
-    from silly_blog.app.views import other_bp
-
     app.register_blueprint(api_bp)
+
+    from silly_blog.app.views import other_bp
     app.register_blueprint(other_bp)
 
 

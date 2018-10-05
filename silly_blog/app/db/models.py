@@ -6,14 +6,8 @@ import uuid
 from datetime import datetime
 
 import sqlalchemy
-from flask_sqlalchemy import SQLAlchemy
 
-
-db = SQLAlchemy(
-    session_options={
-        'expire_on_commit': False
-    }
-)
+from silly_blog.app.db import db
 
 
 def _uuid():
@@ -30,7 +24,7 @@ class TimestampMixin(object):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class ModelBase(IdMixin, TimestampMixin, db.Model):
+class ModelBase(db.Model, TimestampMixin, IdMixin):
     """Base class for models."""
     __abstract__ = True
 
@@ -68,8 +62,7 @@ class RoleAssignment(ModelBase):
     __tablename__ = 'role_assignments'
     __table_args__ = (
         db.UniqueConstraint('user_uuid', 'role_uuid', name='user_role_unique'),
-        db.Index('ix_user_uuid', 'user_uuid')
-    )
+        db.Index('ix_user_uuid', 'user_uuid'))
 
     user_uuid = db.Column(db.String(32), db.ForeignKey('users.uuid'),
                           nullable=False)
@@ -85,8 +78,7 @@ class Role(ModelBase):
     users = db.relationship(
         'User',
         secondary=RoleAssignment.__table__,
-        backref=db.backref('roles'),
-    )
+        backref=db.backref('roles'))
 
 
 class User(ModelBase):
@@ -94,6 +86,7 @@ class User(ModelBase):
 
     username = db.Column(db.String(128), unique=True, nullable=False)
     nickname = db.Column(db.String(128))
+    # TODO: use custom email type for validation
     email = db.Column(db.String(255), unique=True)
     password = db.Column(db.String(128), nullable=False)
     enabled = db.Column(db.Boolean, default=True)
@@ -110,14 +103,12 @@ class Category(ModelBase):
 
     parent_uuid = db.Column(
         db.String(32),
-        db.ForeignKey('categories.uuid'),
-    )
+        db.ForeignKey('categories.uuid'))
 
     children = db.relationship(
         'Category',
         backref=db.backref('parent', remote_side='Category.uuid'),
-        cascade='all,delete',
-    )
+        cascade='all,delete')
 
 
 class Source(ModelBase):
@@ -131,8 +122,7 @@ class TagAssignment(ModelBase):
     __table_args__ = (
         db.UniqueConstraint('article_uuid', 'tag_uuid', name='article_tag_unique'),
         db.Index('ix_article_uuid', 'article_uuid'),
-        db.Index('ix_tag_uuid', 'tag_uuid')
-    )
+        db.Index('ix_tag_uuid', 'tag_uuid'))
 
     article_uuid = db.Column(db.String(32), db.ForeignKey('articles.uuid'),
                           nullable=False)
@@ -148,8 +138,7 @@ class Tag(ModelBase):
     articles = db.relationship(
         'Article',
         secondary=TagAssignment.__table__,
-        backref=db.backref('tags'),
-    )
+        backref=db.backref('tags'))
 
 
 class Article(ModelBase):
@@ -168,32 +157,26 @@ class Article(ModelBase):
     user_uuid = db.Column(
         db.String(32),
         db.ForeignKey(User.uuid),
-        nullable=False,
-    )
+        nullable=False)
     user = db.relationship(
         User,
-        backref=db.backref('articles'),
-    )
+        backref=db.backref('articles'))
 
     category_uuid = db.Column(
         db.String(32),
         db.ForeignKey(Category.uuid),
-        nullable=False,
-    )
+        nullable=False)
     category = db.relationship(
         Category,
-        backref=db.backref('articles'),
-    )
+        backref=db.backref('articles'))
 
     source_uuid = db.Column(
         db.String(32),
         db.ForeignKey(Source.uuid),
-        nullable=False,
-    )
+        nullable=False)
     source = db.relationship(
         Source,
-        backref=db.backref('articles'),
-    )
+        backref=db.backref('articles'))
 
 
 class Comment(ModelBase):
@@ -206,9 +189,7 @@ class Comment(ModelBase):
     article_uuid = db.Column(
         db.String(32),
         db.ForeignKey(Article.uuid),
-        nullable=False,
-    )
+        nullable=False)
     article = db.relationship(
         Article,
-        backref=db.backref('comments'),
-    )
+        backref=db.backref('comments'))
