@@ -16,8 +16,8 @@ def _init_app(self, app):
     1. Models are loaded when `init_app` is executed.
     2. Register exception filters for current engine.
     """
-    from silly_blog.app.db import models, _exc_filters
+    from silly_blog.app.db import models, exc_filters
     retval = _original_init(app)
     with app.app_context():
-        _exc_filters.register_engine(self.engine)
+        exc_filters.register_engine(self.engine)
     return retval

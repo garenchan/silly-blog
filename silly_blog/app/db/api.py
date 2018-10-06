@@ -5,16 +5,21 @@ SQLAlchemy APIs for silly blog.
 import types
 import datetime
 import functools
+import logging
 
 from sqlalchemy import exc as sqla_exc
+from sqlalchemy.orm import exc as orm_exc
 
 from silly_blog.app.db import db
 from silly_blog.app.db.models import (
     ModelBase, Role, User, Category, Source, Tag, Article, RoleAssignment)
 from silly_blog.app.db import exception as db_exc
 
+LOG = logging.getLogger(__name__)
+
 
 def _serialize(data):
+    """Serialize the data into a dictionary."""
     if data is None:
         return None
 
@@ -33,17 +38,20 @@ def _serialize(data):
     raise ValueError('Unknown data type %s' % data)
 
 
-def serialized(f):
-
-    @functools.wraps(f)
+def _serialized(func):
+    """A serialize decorator for db api."""
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             serialize = kwargs.pop('serialize', True)
-            result = f(*args, **kwargs)
+            result = func(*args, **kwargs)
 
             if serialize:
                 result = _serialize(result)
             db.session.commit()
+        except orm_exc.MultipleResultsFound:
+            LOG.exception('Multiple rows were found for one().')
+            return None
         except (sqla_exc.DBAPIError, db_exc.DBError):
             db.session.rollback()
             raise
@@ -53,11 +61,10 @@ def serialized(f):
             # NOTE: no need to remove session, flask-sqlalchemy will
             # do that on app context teardown.
             pass
-
     return wrapper
 
 
-class APIMeta(type):
+class DBAPIMeta(type):
     """Metaclass for API.
 
     Convert the function attributes into class methods and
@@ -68,13 +75,13 @@ class APIMeta(type):
         for k, v in attrs.items():
             if isinstance(v, types.FunctionType):
                 if not k.startswith('_'):
-                    v = serialized(v)
+                    v = _serialized(v)
                 attrs[k] = classmethod(v)
 
         return type.__new__(cls, name, bases, attrs)
 
 
-class APIBase(metaclass=APIMeta):
+class DBAPIBase(metaclass=DBAPIMeta):
     """Base class for API.
 
     Provide some simple and general CRUD APIs.
@@ -84,88 +91,106 @@ class APIBase(metaclass=APIMeta):
 
     def _get(self, _id):
         """Get record by id primary key."""
-        obj = self.__model__.query.get_or_404(_id)
-        return obj
+        record = self.__model__.query.get(_id)
+        return record
 
     def get(self, _id):
         return self._get(_id)
 
     def _get_by_uuid(self, uuid):
         """Get record by uuid."""
-        obj = self.__model__.query.filter_by(uuid=uuid).first_or_404()
-        return obj
+        record = self.__model__.query.filter_by(uuid=uuid).first()
+        return record
 
     def get_by_uuid(self, uuid):
         return self._get_by_uuid(uuid)
 
     def create(self, **kwargs):
         """Create a new record."""
-        obj = self.__model__(**kwargs)
-        db.session.add(obj)
-        return obj
+        record = self.__model__(**kwargs)
+        db.session.add(record)
+        return record
 
     def delete(self, _id):
         """Delete record by id primary key."""
-        obj = self._get(_id)
-        db.session.delete(obj)
+        record = self._get(_id)
+        db.session.delete(record)
 
     def delete_by_uuid(self, uuid):
         """Delete record by uuid."""
-        obj = self._get_by_uuid(uuid)
-        db.session.delete(obj)
+        record = self._get_by_uuid(uuid)
+        db.session.delete(record)
 
-    def _update(self, obj, **kwargs):
-        columns = [c.name for c in self.__model__.__table__.columns]
-        for k, v in kwargs.items():
-            if k in columns:
-                setattr(obj, k, v)
-        db.session.add(obj)
-        return obj
+    def _update(self, record, *args, **kwargs):
+        record.update(*args, **kwargs)
+        db.session.add(record)
+        return record
 
-    def update(self, _id, **kwargs):
+    def update(self, _id, *args, **kwargs):
         """Update record by id primary key."""
-        obj = self._get(_id)
-        return self._update(obj, **kwargs)
+        record = self._get(_id)
+        return self._update(record, *args, **kwargs)
 
-    def update_by_uuid(self, uuid, **kwargs):
+    def update_by_uuid(self, uuid, *args, **kwargs):
         """Update record by uuid."""
-        obj = self._get_by_uuid(uuid)
-        return self._update(obj, **kwargs)
+        record = self._get_by_uuid(uuid)
+        return self._update(record, *args, **kwargs)
 
 
-class RoleAPI(APIBase):
+class RoleDBAPI(DBAPIBase):
     __model__ = Role
 
 
-class UserAPI(APIBase):
+class UserDBAPI(DBAPIBase):
     __model__ = User
 
+    def get_by_username_email(self, username_or_email):
+        """Get user record by username or email."""
+        user = self.__model__.query.filter(
+            db.or_(
+                self.__model__.username == username_or_email,
+                self.__model__.email == username_or_email
+            )).scalar()
+        return user
 
-class CategoryAPI(APIBase):
+    def check_password(self, pwhash, password):
+        """Check that a plaintext password matches hashed."""
+        if isinstance(pwhash, dict):
+            pwhash = pwhash.get('password')
+        return self.__model__.check_password(pwhash, password)
+
+
+class CategoryDBAPI(DBAPIBase):
     __model__ = Category
 
 
-class SourceAPI(APIBase):
+class SourceDBAPI(DBAPIBase):
     __model__ = Source
 
 
-class TagAPI(APIBase):
+class TagDBAPI(DBAPIBase):
     __model__ = Tag
 
 
-class ArticleAPI(APIBase):
+class ArticleDBAPI(DBAPIBase):
     __model__ = Article
 
 
-class RoleAssignmentAPI(APIBase):
+class RoleAssignmentDBAPI(DBAPIBase):
     __model__ = RoleAssignment
 
+    def get_roles_by_user_uuid(self, user_uuid):
+        """Lists all role assignments a user has."""
+        records = db.session.query(Role).join(self.__model__).filter_by(
+            user_uuid=user_uuid).all()
+        return records
+
     def assign_by_uuid(self, user_uuid, role_uuid):
-        user = UserAPI.get_by_uuid(user_uuid, serialize=False)
-        role = RoleAPI.get_by_uuid(role_uuid, serialize=False)
+        user = UserDBAPI.get_by_uuid(user_uuid, serialize=False)
+        role = RoleDBAPI.get_by_uuid(role_uuid, serialize=False)
         user.roles.append(role)
 
     def unassign_by_uuid(self, user_uuid, role_uuid):
-        user = UserAPI.get_by_uuid(user_uuid, serialize=False)
-        role = RoleAPI.get_by_uuid(role_uuid, serialize=False)
+        user = UserDBAPI.get_by_uuid(user_uuid, serialize=False)
+        role = RoleDBAPI.get_by_uuid(role_uuid, serialize=False)
         user.roles.remove(role)

@@ -77,7 +77,7 @@ class HTTPTokenAuth(object):
     def _update_request_context_with_user(user):
         """Store the given user as ctx.user"""
         ctx = _request_ctx_stack.top
-        ctx.user = user
+        ctx.auth_user = user
 
     def load_user(self):
         token = self.get_token()
@@ -126,7 +126,7 @@ class HTTPTokenAuth(object):
 
 
 def _get_user():
-    if has_request_context() and not hasattr(_request_ctx_stack.top, "user"):
+    if has_request_context() and not hasattr(_request_ctx_stack.top, "auth_user"):
         current_app.extensions["auth_manager"].load_user()
 
-    return getattr(_request_ctx_stack.top, "user", None)
+    return getattr(_request_ctx_stack.top, "auth_user", None)

@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 import sqlalchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from silly_blog.app.db import db
 
@@ -21,26 +22,45 @@ class IdMixin(object):
 
 class TimestampMixin(object):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class ModelBase(db.Model, TimestampMixin, IdMixin):
     """Base class for models."""
     __abstract__ = True
 
+    @classmethod
+    def from_dict(cls, d):
+        """Convert a dict to a model.
+
+        :param d: a dict contains model's attributes
+        :type d: dict
+        """
+        assert isinstance(d, dict)
+        new_d = d.copy()
+        return cls(**new_d)
+
     def to_dict(self):
+        """Returns the model's attributes as a dictionary."""
         result = {}
         res = sqlalchemy.inspect(self)
 
         for c in self.__table__.columns:
             if c.key not in res.unloaded:
-                result[c.name] = getattr(self, c.name)
+                try:
+                    result[c.name] = getattr(self, c.name)
+                except AttributeError:
+                    pass
 
         for r in self.__mapper__.relationships:
             if r.key not in res.unloaded:
                 result[r.key] = getattr(self, r.key)
 
         return result
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     def get(self, key, default=None):
         return getattr(self, key, default)
@@ -64,10 +84,14 @@ class RoleAssignment(ModelBase):
         db.UniqueConstraint('user_uuid', 'role_uuid', name='user_role_unique'),
         db.Index('ix_user_uuid', 'user_uuid'))
 
-    user_uuid = db.Column(db.String(32), db.ForeignKey('users.uuid'),
-                          nullable=False)
-    role_uuid = db.Column(db.String(32), db.ForeignKey('roles.uuid'),
-                          nullable=False)
+    user_uuid = db.Column(
+        db.String(32),
+        db.ForeignKey('users.uuid', ondelete='CASCADE'),
+        nullable=False)
+    role_uuid = db.Column(
+        db.String(32),
+        db.ForeignKey('roles.uuid', ondelete='CASCADE'),
+        nullable=False)
 
 
 class Role(ModelBase):
@@ -78,7 +102,8 @@ class Role(ModelBase):
     users = db.relationship(
         'User',
         secondary=RoleAssignment.__table__,
-        backref=db.backref('roles'))
+        backref=db.backref('roles'),
+        lazy='dynamic')
 
 
 class User(ModelBase):
@@ -88,8 +113,23 @@ class User(ModelBase):
     nickname = db.Column(db.String(128))
     # TODO: use custom email type for validation
     email = db.Column(db.String(255), unique=True)
-    password = db.Column(db.String(128), nullable=False)
+    _password = db.Column('password', db.String(128), nullable=False)
     enabled = db.Column(db.Boolean, default=True)
+
+    @property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, value):
+        self._password = generate_password_hash(value)
+
+    @staticmethod
+    def check_password(pwhash, password):
+        """Check that a plaintext password matches hashed."""
+        if not all([pwhash, password]):
+            return False
+        return check_password_hash(pwhash, password)
 
 
 class Category(ModelBase):
@@ -100,10 +140,7 @@ class Category(ModelBase):
     display_order = db.Column(db.Integer)
     protected = db.Column(db.Boolean, default=False)
     childless = db.Column(db.Boolean, default=False)
-
-    parent_uuid = db.Column(
-        db.String(32),
-        db.ForeignKey('categories.uuid'))
+    parent_uuid = db.Column(db.String(32), db.ForeignKey('categories.uuid'))
 
     children = db.relationship(
         'Category',
@@ -124,10 +161,10 @@ class TagAssignment(ModelBase):
         db.Index('ix_article_uuid', 'article_uuid'),
         db.Index('ix_tag_uuid', 'tag_uuid'))
 
-    article_uuid = db.Column(db.String(32), db.ForeignKey('articles.uuid'),
-                          nullable=False)
-    tag_uuid = db.Column(db.String(32), db.ForeignKey('tags.uuid'),
-                          nullable=False)
+    article_uuid = db.Column(
+        db.String(32), db.ForeignKey('articles.uuid'), nullable=False)
+    tag_uuid = db.Column(
+        db.String(32), db.ForeignKey('tags.uuid'), nullable=False)
 
 
 class Tag(ModelBase):
@@ -150,46 +187,27 @@ class Article(ModelBase):
     protected = db.Column(db.Boolean, default=False)
     stars = db.Column(db.Integer, default=0)
     views = db.Column(db.Integer, default=0)
-
     # Record the publication time of the article
     published_at = db.Column(db.DateTime, nullable=True)
-
     user_uuid = db.Column(
-        db.String(32),
-        db.ForeignKey(User.uuid),
-        nullable=False)
-    user = db.relationship(
-        User,
-        backref=db.backref('articles'))
-
+        db.String(32), db.ForeignKey(User.uuid), nullable=False)
     category_uuid = db.Column(
-        db.String(32),
-        db.ForeignKey(Category.uuid),
-        nullable=False)
-    category = db.relationship(
-        Category,
-        backref=db.backref('articles'))
-
+        db.String(32), db.ForeignKey(Category.uuid), nullable=False)
     source_uuid = db.Column(
-        db.String(32),
-        db.ForeignKey(Source.uuid),
-        nullable=False)
-    source = db.relationship(
-        Source,
-        backref=db.backref('articles'))
+        db.String(32), db.ForeignKey(Source.uuid), nullable=False)
+
+    user = db.relationship(User, backref=db.backref('articles'))
+    category = db.relationship(Category, backref=db.backref('articles'))
+    source = db.relationship(Source, backref=db.backref('articles'))
 
 
 class Comment(ModelBase):
     __tablename__ = 'comments'
 
     content = db.Column(db.Text, nullable=False)
-    user_uuid = db.Column(db.String(32), db.ForeignKey(User.uuid),
-                          nullable=False)
-
+    user_uuid = db.Column(
+        db.String(32), db.ForeignKey(User.uuid), nullable=False)
     article_uuid = db.Column(
-        db.String(32),
-        db.ForeignKey(Article.uuid),
-        nullable=False)
-    article = db.relationship(
-        Article,
-        backref=db.backref('comments'))
+        db.String(32), db.ForeignKey(Article.uuid), nullable=False)
+
+    article = db.relationship(Article, backref=db.backref('comments'))

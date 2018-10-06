@@ -277,24 +277,24 @@ def handler(context):
             for cls in exc.__class__.__mro__:
                 if cls not in per_dialect:
                     continue
-
                 regexp_reg = per_dialect[cls]
                 for fn, regexp in regexp_reg:
                     match = regexp.match(exc.args[0])
-                    if match:
-                        try:
-                            fn(exc, match, context.engine.dialect.name,
-                               context.is_disconnect)
-                        except exception.DBError as dbe:
-                            if (context.connection and
-                                    not context.connection.closed and
-                                    not context.connection.invalidated and
-                                    _ROLLBACK_CAUSE_KEY in context.connection.info):
-                                dbe.cause = context.connection.info.pop(
-                                    _ROLLBACK_CAUSE_KEY)
-                            if isinstance(dbe, exception.DBConnectionError):
-                                context.is_disconnect = True
-                            return dbe
+                    if not match:
+                        continue
+                    try:
+                        fn(exc, match, context.engine.dialect.name,
+                           context.is_disconnect)
+                    except exception.DBError as dbe:
+                        if (context.connection and
+                                not context.connection.closed and
+                                not context.connection.invalidated and
+                                _ROLLBACK_CAUSE_KEY in context.connection.info):
+                            dbe.cause = context.connection.info.pop(
+                                _ROLLBACK_CAUSE_KEY)
+                        if isinstance(dbe, exception.DBConnectionError):
+                            context.is_disconnect = True
+                        return dbe
 
 
 def register_engine(engine):

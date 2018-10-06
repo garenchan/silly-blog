@@ -6,6 +6,7 @@ import functools
 
 from flask import g, request, jsonify
 from flask.wrappers import BadRequest
+from marshmallow import Schema
 import iso8601
 
 
@@ -91,7 +92,7 @@ def envelope_json_required(envelope):
             json = request.json
             if not isinstance(json, dict) or \
                     not isinstance(json.get(envelope), dict):
-                return make_error_response(400, "Invalid Params")
+                return make_error_response(400, "Invalid JSON Params")
             # NOTE: don't set envelope attribute on `request`, because it
             # maybe override the original attribute value, `g` namespace
             # is more cleaner.
@@ -138,3 +139,44 @@ def parse_isotime(timestr):
         return iso8601.parse_date(timestr)
     except iso8601.ParseError as ex:
         raise ValueError(str(ex))
+
+
+def require_json_envelope(envelope: str, schema: Schema=None):
+    """Decorator to require a data in json envelope.
+
+    This can only be used in classes and the second argument to the wrapped
+    function must be the data (after self).
+    :param envelope: envelope name
+    :type envelope: str
+    :param schema: a schema used for data validation
+    :type envelope: marshmallow.Schema
+    """
+    def decorating_function(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            res = _check_json_body()
+            if res:
+                return res
+
+            # Check the basic format of the data.
+            json = request.json
+            if (not isinstance(json, dict) or
+                    not isinstance(json.get(envelope), dict)):
+                return make_error_response(400, 'Invalid JSON Params')
+
+            # Use schema for data validation.
+            data = json[envelope]
+            if schema:
+                result = schema.load(data)
+                if result.errors:
+                    return make_error_response(400, result.errors)
+                data = result.data
+
+            # Injection data as parameter.
+            # TODO: check whether outside of class and make data as the first arg.
+            args = list(args)
+            args.insert(1, data)
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorating_function
